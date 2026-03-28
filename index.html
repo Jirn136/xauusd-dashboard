@@ -790,7 +790,7 @@ function setMode(m, fromCandle) {
   }
   document.getElementById('modeTag').textContent = m.toUpperCase();
   // auto-set slider to recommended RR for this mode
-  var recRR = m==='breakout' ? 1.5 : m==='retest' ? 2.5 : 2.0;
+  var recRR = m==='breakout' ? 1.5 : m==='retest' ? 2.0 : 3.0;
   document.getElementById('rrSlider').value = recRR;
   document.getElementById('rrSliderVal').textContent = recRR.toFixed(1)+':1';
   calc();
@@ -803,34 +803,40 @@ function onBoxChange() {
 
 // ── MAIN CALC ──
 //
-// XAUUSD: 1 point = $0.01 price move = $1 P&L per standard lot = $0.01 per 0.01 lot
-// P&L = points_moved * lot * 1.0
+// XAUUSD: 1 point ($0.01) = $1 per standard lot = $0.01 per 0.01 lot
 //
-// SL LOGIC (per mode):
-//   Breakout long  → entry above box high, SL just below box low (full box range + buffer)
-//   Breakout short → entry below box low,  SL just above box high (full box range + buffer)
-//   Retest long    → entry back at box high (pullback), SL just below box high by buffer (~5-10 pts)
-//   Retest short   → entry back at box low (pullback),  SL just above box low by buffer
-//   Reversal long  → entry at box low, SL just below box low by buffer
-//   Reversal short → entry at box high, SL just above box high by buffer
+// SL DISTANCE LOGIC:
+//   Breakout  → SL covers the FULL box range + buffer
+//              (you entered outside the box, risk is back through the whole range)
+//   Retest    → SL = 15% of box range + buffer
+//              (entered at broken wall, SL sits just inside the box — tight but meaningful)
+//   Reversal  → SL = 15% of box range + buffer
+//              (entered at a wall being faded, SL just beyond that wall)
+//
+// SL DIRECTION: always opposite to trade direction
+//   LONG  → SL = entry - slDist  (below entry, always)
+//   SHORT → SL = entry + slDist  (above entry, always)
+//
+// TP1 = entry ± (slDist × rrMult)   — driven by RR slider
+// TP2 = entry ± (slDist × rrMult × 1.5)  — always 50% further than TP1, also moves with slider
 //
 function calc() {
-  var hi    = parseFloat(document.getElementById('bHigh').value)||0;
-  var lo    = parseFloat(document.getElementById('bLow').value)||0;
-  var sp    = parseFloat(document.getElementById('spread').value)||25;
-  var acct  = parseFloat(document.getElementById('acct').value)||20;
-  var rPct  = parseFloat(document.getElementById('riskPct').value)||1;
-  var entry = parseFloat(document.getElementById('entryPrice').value);
-  var lot   = parseFloat(document.getElementById('lotSize').value);
-  var rrMult= parseFloat(document.getElementById('rrSlider').value)||1.5;
+  var hi     = parseFloat(document.getElementById('bHigh').value)||0;
+  var lo     = parseFloat(document.getElementById('bLow').value)||0;
+  var sp     = parseFloat(document.getElementById('spread').value)||25;
+  var acct   = parseFloat(document.getElementById('acct').value)||20;
+  var rPct   = parseFloat(document.getElementById('riskPct').value)||1;
+  var entry  = parseFloat(document.getElementById('entryPrice').value);
+  var lot    = parseFloat(document.getElementById('lotSize').value);
+  var rrMult = parseFloat(document.getElementById('rrSlider').value)||1.5;
 
   if(hi<=lo||!hi||!lo) return;
 
-  var spPts      = sp * 0.01;           // 25 pts → $0.25 price units
-  var rangePrice = hi - lo;             // e.g. 78 pts = $0.78
+  var spPts      = sp * 0.01;
+  var rangePrice = parseFloat((hi - lo).toFixed(2));
   var rangePts   = Math.round(rangePrice / 0.01);
   var riskDollar = acct * rPct / 100;
-  var buffer     = spPts + 0.20;        // spread + $0.20 buffer in price units
+  var buffer     = spPts + 0.30;
 
   // ── Effective entry ──
   var effectiveEntry;
@@ -845,58 +851,65 @@ function calc() {
       effectiveEntry = tradeDir==='long' ? lo + spPts : hi - spPts;
     }
   }
+  effectiveEntry = parseFloat(effectiveEntry.toFixed(2));
 
-  // ── SL placement ──
-  var sl;
-  if(currentMode==='breakout'){
-    // Entry is outside the box — SL goes to the OPPOSITE wall
-    // Long broke above: SL below box low.  Short broke below: SL above box high.
-    sl = tradeDir==='long' ? lo - buffer : hi + buffer;
-  } else if(currentMode==='retest'){
-    // Entry is back at the broken wall after breakout.
-    // SL sits a small buffer BEYOND that same wall (not the far wall).
-    // Long retest at box high: SL just below box high
-    // Short retest at box low: SL just above box low
-    sl = tradeDir==='long' ? hi - buffer : lo + buffer;
+  // ── SL distance (always positive, in price) ──
+  //
+  // Breakout : entered OUTSIDE the box → SL at opposite wall = full range + buffer
+  // Retest   : entered AT the broken wall after pullback → SL at opposite wall = full range + buffer
+  //            (if price goes back through the whole box, the breakout failed)
+  // Reversal : entered AT a wall FADING it → SL just beyond that same wall
+  //            meaningful distance — 25% of box range + buffer
+  //            (not the full range, but enough beyond the rejection to absorb noise)
+  //
+  var slDist;
+  if(currentMode==='breakout' || currentMode==='retest'){
+    slDist = parseFloat((rangePrice + buffer).toFixed(2));
   } else {
-    // Reversal: entry at the wall, SL just beyond that wall
-    // Long reversal at box low: SL just below box low
-    // Short reversal at box high: SL just above box high
-    sl = tradeDir==='long' ? lo - buffer : hi + buffer;
+    // Reversal: 25% of box range + buffer — tight but not trivial
+    slDist = parseFloat((rangePrice * 0.25 + buffer).toFixed(2));
   }
 
-  var slPts    = Math.abs(effectiveEntry - sl);          // in price
-  var slPoints = Math.max(Math.round(slPts / 0.01), 1);  // in integer points, min 1
+  // ── SL price — guaranteed correct side of entry ──
+  var sl = tradeDir==='long'
+    ? parseFloat((effectiveEntry - slDist).toFixed(2))   // LONG: SL below entry
+    : parseFloat((effectiveEntry + slDist).toFixed(2));  // SHORT: SL above entry
 
-  // ── Suggested lot ──
+  var slPoints = Math.max(Math.round(slDist / 0.01), 1);
+
+  // ── TP1 and TP2 — both driven by RR slider ──
+  // TP1 = entry ± slDist × rrMult
+  // TP2 = entry ± slDist × rrMult × 1.5  (always 50% further than TP1)
+  var tp1Dist = slDist * rrMult;
+  var tp2Dist = slDist * rrMult * 1.5;
+
+  var tp1 = tradeDir==='long'
+    ? parseFloat((effectiveEntry + tp1Dist).toFixed(2))
+    : parseFloat((effectiveEntry - tp1Dist).toFixed(2));
+
+  var tp2 = tradeDir==='long'
+    ? parseFloat((effectiveEntry + tp2Dist).toFixed(2))
+    : parseFloat((effectiveEntry - tp2Dist).toFixed(2));
+
+  // ── P&L ──
   var sugLotRaw = slPoints > 0 ? riskDollar / slPoints : 0.01;
   var sugLot    = Math.max(parseFloat(sugLotRaw.toFixed(2)), 0.01);
   var activeLot = (!isNaN(lot) && lot >= 0.01) ? lot : sugLot;
+  var pointVal  = activeLot;   // $ per point (0.01 lot → $0.01/pt)
 
-  // ── TP from slider RR ──
-  // rrMult is the user-chosen R:R e.g. 1.5 means TP = entry ± slPts*1.5
-  var tp = tradeDir==='long'
-    ? effectiveEntry + slPts * rrMult
-    : effectiveEntry - slPts * rrMult;
-
-  // Fixed TP2 always at 2.5R for reference
-  var tp2ref = tradeDir==='long'
-    ? effectiveEntry + slPts * 2.5
-    : effectiveEntry - slPts * 2.5;
-
-  // ── P&L ──
-  var pointVal  = activeLot * 1.0;  // $ per point per lot
-  var profTP    = slPoints * rrMult * pointVal;
-  var profTP2   = slPoints * 2.5   * pointVal;
-  var lossIfSL  = slPoints * pointVal;
+  var tp1Points  = Math.round(tp1Dist / 0.01);
+  var tp2Points  = Math.round(tp2Dist / 0.01);
+  var profTP1    = parseFloat((tp1Points * pointVal).toFixed(2));
+  var profTP2    = parseFloat((tp2Points * pointVal).toFixed(2));
+  var lossIfSL   = parseFloat((slPoints  * pointVal).toFixed(2));
 
   // ── Recommended RR per mode ──
-  var recRR = currentMode==='breakout' ? 1.5 : currentMode==='retest' ? 2.5 : 2.0;
+  var recRR     = currentMode==='breakout' ? 1.5 : currentMode==='retest' ? 2.0 : 3.0;
   var recRRNote = currentMode==='breakout'
-    ? 'Min 1.5R for breakouts — momentum fades fast'
+    ? 'SL = full box range. Min 1.5R — momentum can fade, don\'t get greedy'
     : currentMode==='retest'
-    ? 'Target 2.5R+ for retests — cleaner entry, tighter SL'
-    : 'Target 2R for reversals — SL is tight, room to box opposite wall';
+    ? 'SL = full box range (same risk as breakout). Target 2R+ for the extra patience'
+    : 'SL = tight buffer beyond wall (~20–30 pts). Target 3R+ — small risk, big reward';
 
   // ── Spread stats ──
   var spreadPct = rangePts > 0 ? (sp / rangePts * 100) : 0;
@@ -910,62 +923,60 @@ function calc() {
   st.textContent = spreadPct > 30 ? 'SPREAD HIGH' : 'XAUUSD';
   st.className   = 'ptag' + (spreadPct > 30 ? ' bear' : '');
 
-  // ── Update trade levels ──
+  // ── Trade levels ──
   document.getElementById('lEntry').textContent   = effectiveEntry.toFixed(2);
   document.getElementById('lDir').textContent     = tradeDir==='long' ? '▲ LONG' : '▼ SHORT';
   document.getElementById('lSL').textContent      = sl.toFixed(2);
-  document.getElementById('lSLPips').textContent  = slPoints + ' pts (spread + buffer)';
-  document.getElementById('lTP1').textContent     = tp.toFixed(2);
-  document.getElementById('lTP1Pips').textContent = Math.round(slPoints * rrMult) + ' pts from entry';
-  document.getElementById('tp1pill').textContent  = '+$' + profTP.toFixed(2);
-  document.getElementById('lTP2').textContent     = tp2ref.toFixed(2);
-  document.getElementById('lTP2Pips').textContent = Math.round(slPoints * 2.5) + ' pts (2.5R ref)';
+  document.getElementById('lSLPips').textContent  = slPoints + ' pts  (' + slDist.toFixed(2) + ' price)';
+  document.getElementById('lTP1').textContent     = tp1.toFixed(2);
+  document.getElementById('lTP1Pips').textContent = tp1Points + ' pts · ' + rrMult.toFixed(1) + 'R from entry';
+  document.getElementById('tp1pill').textContent  = '+$' + profTP1.toFixed(2);
+  document.getElementById('lTP2').textContent     = tp2.toFixed(2);
+  document.getElementById('lTP2Pips').textContent = tp2Points + ' pts · ' + (rrMult*1.5).toFixed(1) + 'R from entry';
   document.getElementById('tp2pill').textContent  = '+$' + profTP2.toFixed(2);
   document.getElementById('lSugLot').textContent  = sugLot.toFixed(2) + ' lots';
   document.getElementById('lSugLotNote').textContent = sugLotRaw < 0.01
-    ? 'clamped to 0.01 min' : 'based on ' + rPct + '% risk / ' + slPoints + ' pt SL';
+    ? 'clamped to 0.01 min' : 'for ' + rPct + '% risk · ' + slPoints + ' pt SL';
   document.getElementById('lRR').textContent      = rrMult.toFixed(1) + ':1';
-  document.getElementById('lRRNote').textContent  = currentMode + ' mode';
-  document.getElementById('sMaxProfit').textContent = '+$' + profTP.toFixed(2);
+  document.getElementById('lRRNote').textContent  = currentMode + ' · TP2 at ' + (rrMult*1.5).toFixed(1) + 'R';
+  document.getElementById('sMaxProfit').textContent = '+$' + profTP2.toFixed(2);
 
   // ── Profit summary ──
-  document.getElementById('psTP1').textContent  = '+$' + profTP.toFixed(2);
+  document.getElementById('psTP1').textContent  = '+$' + profTP1.toFixed(2);
   document.getElementById('psTP2').textContent  = '+$' + profTP2.toFixed(2);
   document.getElementById('psSL').textContent   = '-$' + lossIfSL.toFixed(2);
-  document.getElementById('psAcct').textContent = '$' + (acct - lossIfSL).toFixed(2);
+  document.getElementById('psAcct').textContent = '$' + parseFloat((acct - lossIfSL).toFixed(2));
 
-  // ── RR gauge & recommended ──
-  var rrPct = Math.min((rrMult / 4.0) * 100, 100);
-  document.getElementById('rrFill').style.width = rrPct + '%';
-  document.getElementById('rrVal').textContent  = rrMult.toFixed(1) + ':1';
-
-  // recommended marker position
-  var recPct = Math.min((recRR / 4.0) * 100, 100);
-  document.getElementById('rrRecMarker').style.left = recPct + '%';
+  // ── RR gauge ──
+  var rrPct  = Math.min(((rrMult - 0.5) / 3.5) * 100, 100);
+  var recPct = Math.min(((recRR  - 0.5) / 3.5) * 100, 100);
+  var aboveRec = rrMult >= recRR;
+  document.getElementById('rrFill').style.width      = rrPct + '%';
+  document.getElementById('rrFill').style.background = aboveRec ? 'var(--green)' : 'var(--amber)';
+  var dot = document.getElementById('rrFillDot');
+  if(dot) dot.style.background = aboveRec ? 'var(--green)' : 'var(--amber)';
+  document.getElementById('rrRecMarker').style.left  = recPct + '%';
   document.getElementById('rrRecLabel').textContent  = 'Rec ' + recRR + ':1';
   document.getElementById('rrRecLabel').style.left   = recPct + '%';
-
-  // colour: below rec = amber, at/above = green
-  document.getElementById('rrFill').style.background = rrMult >= recRR ? 'var(--green)' : 'var(--amber)';
-  document.getElementById('rrFill').style.transition  = 'width .25s, background .25s';
-  var dot = document.getElementById('rrFillDot');
-  if(dot) dot.style.background = rrMult >= recRR ? 'var(--green)' : 'var(--amber)';
-
-  document.getElementById('rrRecNote').textContent = recRRNote;
+  document.getElementById('rrRecNote').textContent   = recRRNote;
   document.getElementById('rrSliderVal').textContent = rrMult.toFixed(1) + ':1';
+  document.getElementById('rrVal').textContent       = rrMult.toFixed(1) + ':1';
 
   // ── Entry hint ──
   var hint = document.getElementById('entrySuggest');
-  if(!isNaN(entry) && entry>0 && !isNaN(lot) && lot>=0.01){
-    hint.textContent = 'Entry ' + effectiveEntry.toFixed(2) + ', lot ' + activeLot.toFixed(2)
-      + '. SL: ' + slPoints + ' pts. Each point = $' + activeLot.toFixed(2) + '.';
-    hint.style.color='var(--green)';
-  } else if(!isNaN(entry) && entry>0){
-    hint.textContent = 'Entry set. Enter your lot size to complete the setup.';
-    hint.style.color='var(--amber)';
+  if(!isNaN(entry) && entry > 0 && !isNaN(lot) && lot >= 0.01){
+    var dir = tradeDir==='long' ? 'Long' : 'Short';
+    hint.textContent = dir + ' ' + effectiveEntry.toFixed(2)
+      + ' → SL ' + sl.toFixed(2) + ' (' + slPoints + ' pts)'
+      + ' → TP1 ' + tp1.toFixed(2) + ' → TP2 ' + tp2.toFixed(2)
+      + ' | 1pt = $' + activeLot.toFixed(2);
+    hint.style.color = 'var(--green)';
+  } else if(!isNaN(entry) && entry > 0){
+    hint.textContent = 'Entry ' + effectiveEntry.toFixed(2) + ' set. Add lot size to see full P&L.';
+    hint.style.color = 'var(--amber)';
   } else {
-    hint.textContent = 'Enter your actual entry price and lot size — TP & SL auto-calculate.';
-    hint.style.color='var(--text3)';
+    hint.textContent = 'Enter your entry price and lot size — SL, TP1 and TP2 auto-calculate.';
+    hint.style.color = 'var(--text3)';
   }
 }
 
