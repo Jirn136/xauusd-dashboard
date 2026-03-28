@@ -49,7 +49,7 @@ input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-
 input[type=number]:focus,select:focus{border-color:var(--gold)}
 select{cursor:pointer}
 
-.inputs-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px}
+.inputs-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
 .input-full{grid-column:1/-1}
 
 .spread-warn{font-family:var(--mono);font-size:10px;color:var(--red);background:var(--red-dim);border:1px solid rgba(239,68,68,0.2);padding:7px 10px;display:none;letter-spacing:.02em;line-height:1.6;margin-top:8px}
@@ -213,40 +213,75 @@ hr{border:none;border-top:1px solid var(--border);margin:10px 0}
 <!-- ══ COL 1 ══ -->
 <div class="col">
 
-  <!-- PANEL 01: Box Setup -->
+  <!-- PANEL 01: Combined Setup Panel -->
   <div class="panel">
     <div class="panel-head">
-      <span class="panel-title">01 · Price & Box Setup</span>
+      <span class="panel-title">01 · Box Setup & Trade Parameters</span>
       <span class="panel-tag">XAUUSD</span>
     </div>
     <div class="panel-body">
       <div class="inputs-grid">
         <div>
           <label class="field-label">Box High</label>
-          <input type="number" id="bHigh" value="3320.00" step="0.01" oninput="calc()" style="width:100%">
+          <input type="number" id="bHigh" value="3320.00" step="0.01" oninput="calcAll()">
         </div>
         <div>
           <label class="field-label">Box Low</label>
-          <input type="number" id="bLow" value="3315.00" step="0.01" oninput="calc()" style="width:100%">
+          <input type="number" id="bLow" value="3315.00" step="0.01" oninput="calcAll()">
         </div>
         <div>
           <label class="field-label">Spread (pts)</label>
-          <input type="number" id="spread" value="25" step="1" min="1" oninput="calc()" style="width:100%">
+          <input type="number" id="spread" value="25" step="1" min="1" oninput="calcAll()">
         </div>
         <div>
           <label class="field-label">Account (USD)</label>
-          <input type="number" id="acct" value="20" step="1" oninput="calc()" style="width:100%">
+          <input type="number" id="acct" value="20" step="1" oninput="calcAll()">
         </div>
         <div>
           <label class="field-label">Risk %</label>
-          <input type="number" id="riskPct" value="1" step="0.1" min="0.1" max="5" oninput="calc()" style="width:100%">
+          <input type="number" id="riskPct" value="1" step="0.1" min="0.1" max="5" oninput="calcAll()">
         </div>
         <div>
           <label class="field-label">Leverage</label>
-          <input type="number" id="leverage" value="1000" step="100" min="1" oninput="calc()" style="width:100%">
+          <input type="number" id="leverage" value="1000" step="100" min="1" oninput="calcAll()">
+        </div>
+        
+        <!-- Trade Parameters Section -->
+        <div class="input-full" style="margin-top: 15px;">
+          <h3 style="font-family: var(--mono); font-size: 12px; color: var(--text2); margin-bottom: 10px;">Trade Parameters</h3>
+        </div>
+        
+        <div>
+          <label class="field-label">Entry</label>
+          <input type="number" id="entry" value="3320.00" step="0.01" oninput="calcFromManual()">
+        </div>
+        <div>
+          <label class="field-label">Stop Loss</label>
+          <input type="number" id="stopLoss" value="3315.00" step="0.01" oninput="calcFromManual()">
+        </div>
+        <div>
+          <label class="field-label">Take Profit 1</label>
+          <input type="number" id="tp1" value="3325.00" step="0.01" oninput="calcFromManual()">
+        </div>
+        <div>
+          <label class="field-label">Take Profit 2</label>
+          <input type="number" id="tp2" value="3330.00" step="0.01" oninput="calcFromManual()">
+        </div>
+        <div>
+          <label class="field-label">Lot Size</label>
+          <input type="number" id="lotSize" value="0.01" step="0.01" min="0.01" oninput="calcFromManual()">
+        </div>
+        <div>
+          <label class="field-label">Direction</label>
+          <select id="direction" onchange="calcAll()">
+            <option value="long">Long</option>
+            <option value="short">Short</option>
+          </select>
         </div>
       </div>
+      
       <div id="spreadWarn" class="spread-warn">⚠ Spread exceeds 30% of box range — box is too tight to trade safely. Wait for a bigger range or lower spread.</div>
+      
       <div class="stats-row">
         <div class="stat">
           <div class="stat-label">Range</div>
@@ -265,7 +300,7 @@ hr{border:none;border-top:1px solid var(--border);margin:10px 0}
           <div class="stat-val gold" id="sRiskDollar">—</div>
         </div>
         <div class="stat">
-          <div class="stat-label">Max profit</div>
+          <div class="stat-label">Max Profit</div>
           <div class="stat-val" style="color:var(--green)" id="sMaxProfit">—</div>
         </div>
       </div>
@@ -276,7 +311,7 @@ hr{border:none;border-top:1px solid var(--border);margin:10px 0}
   <div class="panel">
     <div class="panel-head">
       <span class="panel-title">02 · Candle Character</span>
-      <span class="panel-tag" id="dirTag">—</span>
+      <span class="panel-tag" id="dirTag">LONG</span>
     </div>
     <div class="panel-body">
       <div class="candle-section">
@@ -348,90 +383,10 @@ hr{border:none;border-top:1px solid var(--border);margin:10px 0}
 <!-- ══ COL 2 ══ -->
 <div class="col">
 
-  <!-- PANEL 03: Trade Levels -->
+  <!-- PANEL 03: Pre-Trade Checklist -->
   <div class="panel">
     <div class="panel-head">
-      <span class="panel-title">03 · Trade Levels</span>
-      <span class="panel-tag" id="modeTag">—</span>
-    </div>
-    <div class="panel-body">
-      <div class="levels-grid">
-        <div class="level-card">
-          <div class="level-lbl">Entry</div>
-          <div class="level-val gold" id="lEntry">—</div>
-          <div class="level-sub" id="lDir">— direction</div>
-        </div>
-        <div class="level-card">
-          <div class="level-lbl">Stop Loss</div>
-          <div class="level-val red" id="lSL">—</div>
-          <div class="level-sub" id="lSLPips">— pips (incl. spread)</div>
-        </div>
-        <div class="level-card tp-card">
-          <div class="level-lbl">TP 1 · 1.5R</div>
-          <div class="level-val green" id="lTP1">—</div>
-          <div class="level-sub" id="lTP1Pips">—</div>
-          <div class="tp-profit-badge" id="tp1profit">$—</div>
-        </div>
-        <div class="level-card tp-card">
-          <div class="level-lbl">TP 2 · 2.5R</div>
-          <div class="level-val green" id="lTP2">—</div>
-          <div class="level-sub" id="lTP2Pips">—</div>
-          <div class="tp-profit-badge" id="tp2profit">$—</div>
-        </div>
-        <div class="level-card">
-          <div class="level-lbl">Risk Amount</div>
-          <div class="level-val" id="lRisk">—</div>
-          <div class="level-sub" id="lRiskPct">— % of account</div>
-        </div>
-        <div class="level-card">
-          <div class="level-lbl">Lot Size</div>
-          <div class="level-val gold" id="lLot">—</div>
-          <div class="level-sub" id="lLotNote">min 0.01 lots</div>
-        </div>
-      </div>
-
-      <!-- PROFIT SUMMARY BAR -->
-      <div style="margin-top:10px;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:2px">
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-          <div>
-            <div class="stat-label" style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.08em">IF TP1 HIT</div>
-            <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--green);margin-top:2px" id="profitTP1">$—</div>
-          </div>
-          <div style="color:var(--text3);font-family:var(--mono);font-size:14px">→</div>
-          <div>
-            <div class="stat-label" style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.08em">IF TP2 HIT</div>
-            <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--green);margin-top:2px" id="profitTP2">$—</div>
-          </div>
-          <div style="color:var(--text3);font-family:var(--mono);font-size:14px">✕</div>
-          <div>
-            <div class="stat-label" style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.08em">IF SL HIT</div>
-            <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--red);margin-top:2px" id="lossIfSL">$—</div>
-          </div>
-          <div>
-            <div class="stat-label" style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.08em">Acct after SL</div>
-            <div style="font-family:var(--mono);font-size:14px;color:var(--text2);margin-top:2px" id="acctAfterSL">$—</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="rr-section">
-        <div class="rr-labels">
-          <span class="rr-label-txt">R:R ratio</span>
-          <span class="rr-label-txt" id="rrVal">—</span>
-        </div>
-        <div class="rr-track">
-          <div class="rr-fill" id="rrFill" style="width:0%"></div>
-          <div class="rr-min-line"></div>
-          <div class="rr-min-label">1.5 min</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- PANEL 04: Checklist -->
-  <div class="panel">
-    <div class="panel-head">
-      <span class="panel-title">04 · Pre-Trade Checklist</span>
+      <span class="panel-title">03 · Pre-Trade Checklist</span>
       <span class="panel-tag" id="checkCount">0/6</span>
     </div>
     <div class="panel-body">
@@ -465,9 +420,9 @@ hr{border:none;border-top:1px solid var(--border);margin:10px 0}
     </div>
   </div>
 
-  <!-- PANEL 05: Notes -->
+  <!-- PANEL 04: Trade Notes -->
   <div class="panel">
-    <div class="panel-head"><span class="panel-title">05 · Trade Notes</span></div>
+    <div class="panel-head"><span class="panel-title">04 · Trade Notes</span></div>
     <div class="panel-body">
       <textarea class="notes-box" placeholder="e.g. Asian box 3315–3320. London break up with big bull. Entered long 3320.25. SL 3314.50. Watching TP1 at 3324.50..."></textarea>
     </div>
@@ -639,29 +594,17 @@ function drawCandle(body,pos){
   }
 
   // adjust vertical position based on box position
-// adjust vertical position based on box position
-let offsetY=0;
-if(pos==='top'){offsetY=-(BOX_H*0.28);}
-else if(pos==='bottom'){offsetY=BOX_H*0.28;}
-else if(pos==='mid'){offsetY=0;}
-else if(pos==='break_up'){
+  let offsetY=0;
+  if(pos==='top'){offsetY=-(BOX_H*0.28);}
+  else if(pos==='bottom'){offsetY=BOX_H*0.28;}
+  else if(pos==='mid'){offsetY=0;}
+  else if(pos==='break_up'){
     offsetY=-(BOX_H*0.55);
     arrow.textContent='↑';arrow.style.top=(BOX_TOP_PX-40)+'px';arrow.style.color='var(--green)';arrow.style.opacity='1';
-} else if(pos==='break_down'){
+  } else if(pos==='break_down'){
     offsetY=BOX_H*0.55;
     arrow.textContent='↓';arrow.style.top=(BOX_BOT_PX+8)+'px';arrow.style.color='var(--red)';arrow.style.opacity='1';
-}
-
-// Special handling for big candles at box edges to prevent visual distortion
-if((body==='big_bull' || body==='big_bear' || body==='engulf_bull' || body==='engulf_bear') && 
-   (pos==='top' || pos==='bottom')) {
-    if(pos==='top') {
-        offsetY = -(BOX_H * 0.4); // Move up more to show full candle
-    } else {
-        offsetY = BOX_H * 0.4; // Move down more to show full candle
-    }
-}
-
+  }
 
   bodyTop+=offsetY; bodyBot+=offsetY;
   wickTop+=offsetY; wickBot+=offsetY;
@@ -811,7 +754,11 @@ function readCandle(){
   ['mBreak','mRetest','mRev'].forEach(id=>document.getElementById(id).className='mode-btn');
   const map={breakout:'mBreak',retest:'mRetest',reversal:'mRev'};
   if(suggest){document.getElementById(map[suggest]).className='mode-btn suggest';setMode(suggest,true);}
-  calc();
+  
+  // Update direction selector
+  document.getElementById('direction').value = dir;
+  
+  calcAll();
 }
 
 function setMode(m,fromCandle){
@@ -822,16 +769,18 @@ function setMode(m,fromCandle){
     document.getElementById(map[m]).className='mode-btn active';
   }
   document.getElementById('modeTag').textContent=m.toUpperCase();
-  calc();
+  calcAll();
 }
 
-// ── CALC ──
-function calc(){
+// ── CALCULATIONS ──
+function calcAll(){
   const hi=parseFloat(document.getElementById('bHigh').value)||0;
   const lo=parseFloat(document.getElementById('bLow').value)||0;
   const sp=parseFloat(document.getElementById('spread').value)||25;
   const acct=parseFloat(document.getElementById('acct').value)||20;
   const riskPct=parseFloat(document.getElementById('riskPct').value)||1;
+  const direction=document.getElementById('direction').value;
+  
   if(hi<=lo||!hi||!lo)return;
 
   const spPips=sp/10;
@@ -847,60 +796,87 @@ function calc(){
   document.getElementById('spreadWarn').style.display=spreadPct>30?'block':'none';
   document.getElementById('sSpread').className='stat-val'+(spreadPct>30?' danger':spreadPct>20?' warn':'');
 
-  let entry,sl,slPips,mult;
+  // Calculate SL and TP based on selected mode and direction
+  let sl,tp1,tp2,lotSize;
+  
   if(currentMode==='breakout'){
-    entry=dir==='long'?hi+(spPips/10):lo-(spPips/10);
-    sl=dir==='long'?lo-(spPips/10):hi+(spPips/10);
-    slPips=Math.abs(entry-sl)*10; mult=1.5;
+    if(direction==='long'){
+      sl=lo-(spPips/10);
+      tp1=hi+(spPips/10)+(rangePts*1.5);
+      tp2=hi+(spPips/10)+(rangePts*2.5);
+    } else {
+      sl=hi+(spPips/10);
+      tp1=lo-(spPips/10)-(rangePts*1.5);
+      tp2=lo-(spPips/10)-(rangePts*2.5);
+    }
   } else if(currentMode==='retest'){
-    entry=dir==='long'?hi:lo;
-    sl=dir==='long'?hi-(spPips/10)-0.5:lo+(spPips/10)+0.5;
-    slPips=Math.abs(entry-sl)*10+spPips; mult=2.5;
-  } else {
-    entry=dir==='long'?lo+(spPips/10):hi-(spPips/10);
-    sl=dir==='long'?lo-(spPips/10)-0.3:hi+(spPips/10)+0.3;
-    slPips=Math.abs(entry-sl)*10+spPips; mult=2.0;
+    if(direction==='long'){
+      sl=hi-(spPips/10)-0.5;
+      tp1=hi+(rangePts*1.5);
+      tp2=hi+(rangePts*2.5);
+    } else {
+      sl=lo+(spPips/10)+0.5;
+      tp1=lo-(rangePts*1.5);
+      tp2=lo-(rangePts*2.5);
+    }
+  } else { // reversal
+    if(direction==='long'){
+      sl=lo-(spPips/10)-0.3;
+      tp1=lo+(spPips/10)+(rangePts*2.0);
+      tp2=lo+(spPips/10)+(rangePts*3.0);
+    } else {
+      sl=hi+(spPips/10)+0.3;
+      tp1=hi-(spPips/10)-(rangePts*2.0);
+      tp2=hi-(spPips/10)-(rangePts*3.0);
+    }
   }
-
-  // lot: risk$ / (slPips * $1 per pip per 0.01 lot for gold)
-  // For XAUUSD: 1 lot = 100oz, 1 pip = $1 per 0.01 lot
-  const lotRaw=riskDollar/(slPips*1.0);
-  const lot=Math.max(parseFloat(lotRaw.toFixed(2)),0.01); // min 0.01
-
-  const tp1=dir==='long'?entry+(slPips*1.5/10):entry-(slPips*1.5/10);
-  const tp2=dir==='long'?entry+(slPips*2.5/10):entry-(slPips*2.5/10);
-
-  // profit = pips * lot * $10 per pip per lot for XAUUSD (1 pip = $10/lot)
-  const pipVal=lot*10; // $ per pip
+  
+  // Calculate lot size based on risk
+  const slPips = Math.abs((direction==='long' ? hi : lo) - sl) * 10 + spPips;
+  const lotRaw = riskDollar / (slPips * 1.0);
+  lotSize = Math.max(parseFloat(lotRaw.toFixed(2)), 0.01);
+  
+  // Update input fields
+  document.getElementById('entry').value = (direction==='long' ? hi : lo).toFixed(2);
+  document.getElementById('stopLoss').value = sl.toFixed(2);
+  document.getElementById('tp1').value = tp1.toFixed(2);
+  document.getElementById('tp2').value = tp2.toFixed(2);
+  document.getElementById('lotSize').value = lotSize.toFixed(2);
+  
+  // Calculate profits
+  const pipVal=lotSize*10; // $ per pip
   const profitTP1Dollars=slPips*1.5*pipVal;
   const profitTP2Dollars=slPips*2.5*pipVal;
   const lossIfSL=slPips*pipVal;
-
-  const rrPct=Math.min((mult/3.5)*100,100);
-
-  document.getElementById('lEntry').textContent=entry.toFixed(2);
-  document.getElementById('lDir').textContent=dir==='long'?'▲ LONG':'▼ SHORT';
-  document.getElementById('lSL').textContent=sl.toFixed(2);
-  document.getElementById('lSLPips').textContent=slPips.toFixed(1)+' pips (incl. spread)';
-  document.getElementById('lTP1').textContent=tp1.toFixed(2);
-  document.getElementById('lTP1Pips').textContent=(slPips*1.5).toFixed(1)+' pips from entry';
-  document.getElementById('lTP2').textContent=tp2.toFixed(2);
-  document.getElementById('lTP2Pips').textContent=(slPips*2.5).toFixed(1)+' pips from entry';
-  document.getElementById('lRisk').textContent='$'+riskDollar.toFixed(2);
-  document.getElementById('lRiskPct').textContent=riskPct+'% of $'+acct;
-  document.getElementById('lLot').textContent=lot.toFixed(2)+' lots';
-  document.getElementById('lLotNote').textContent=lotRaw<0.01?'clamped to 0.01 min':'min 0.01 lots';
-
-  document.getElementById('tp1profit').textContent='+$'+profitTP1Dollars.toFixed(2);
-  document.getElementById('tp2profit').textContent='+$'+profitTP2Dollars.toFixed(2);
-  document.getElementById('profitTP1').textContent='+$'+profitTP1Dollars.toFixed(2);
-  document.getElementById('profitTP2').textContent='+$'+profitTP2Dollars.toFixed(2);
-  document.getElementById('lossIfSL').textContent='-$'+lossIfSL.toFixed(2);
-  document.getElementById('acctAfterSL').textContent='$'+(acct-lossIfSL).toFixed(2);
+  
   document.getElementById('sMaxProfit').textContent='+$'+profitTP2Dollars.toFixed(2);
+}
 
-  document.getElementById('rrFill').style.width=rrPct+'%';
-  document.getElementById('rrVal').textContent=mult+':1';
+function calcFromManual(){
+  // When user manually changes trade parameters, recalculate risk
+  const hi=parseFloat(document.getElementById('bHigh').value)||0;
+  const lo=parseFloat(document.getElementById('bLow').value)||0;
+  const sp=parseFloat(document.getElementById('spread').value)||25;
+  const acct=parseFloat(document.getElementById('acct').value)||20;
+  const entry=parseFloat(document.getElementById('entry').value)||0;
+  const sl=parseFloat(document.getElementById('stopLoss').value)||0;
+  const lotSize=parseFloat(document.getElementById('lotSize').value)||0.01;
+  
+  if(hi<=lo||!hi||!lo||!entry||!sl||!lotSize)return;
+  
+  const spPips=sp/10;
+  const slPips=Math.abs(entry-sl)*10 + spPips;
+  const riskDollar=slPips*lotSize*1.0;
+  const riskPct=(riskDollar/acct)*100;
+  
+  document.getElementById('riskPct').value=riskPct.toFixed(2);
+  document.getElementById('sRiskDollar').textContent='$'+riskDollar.toFixed(2);
+  
+  // Update max profit calculation
+  const tp2=parseFloat(document.getElementById('tp2').value)||0;
+  const tpPips=Math.abs(entry-tp2)*10;
+  const profitTP2Dollars=tpPips*lotSize*1.0;
+  document.getElementById('sMaxProfit').textContent='+$'+profitTP2Dollars.toFixed(2);
 }
 
 // ── CHECKLIST ──
@@ -922,7 +898,7 @@ function updateCheckCount(){
 // ── INIT ──
 setMode('breakout');
 readCandle();
-calc();
+calcAll();
 drawCandle('big_bull','top');
 </script>
 </body>
