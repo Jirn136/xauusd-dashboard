@@ -5,16 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>XAUUSD Box Strategy Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root {
+:root{
   --bg:#0a0c0f;--bg2:#0f1217;--bg3:#141820;--panel:#191d26;
-  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
-  --gold:#f0b429;--gold2:#e09c18;--gold-dim:rgba(240,180,41,0.12);--gold-glow:rgba(240,180,41,0.25);
-  --green:#22c55e;--green-dim:rgba(34,197,94,0.1);--green-mid:rgba(34,197,94,0.25);
-  --red:#ef4444;--red-dim:rgba(239,68,68,0.1);--red-mid:rgba(239,68,68,0.25);
-  --blue:#3b82f6;--blue-dim:rgba(59,130,246,0.1);
-  --amber:#f59e0b;--amber-dim:rgba(245,158,11,0.1);
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.14);
+  --gold:#f0b429;--gold-dim:rgba(240,180,41,0.12);--gold-glow:rgba(240,180,41,0.25);
+  --green:#22c55e;--green-dim:rgba(34,197,94,0.1);--green-mid:rgba(34,197,94,0.22);
+  --red:#ef4444;--red-dim:rgba(239,68,68,0.1);
+  --amber:#f59e0b;
   --text:#e8eaf0;--text2:#8b8fa8;--text3:#4a4e63;
   --mono:'Space Mono',monospace;--sans:'Syne',sans-serif;
 }
@@ -22,173 +21,191 @@
 html{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px}
 body{min-height:100vh}
 
-header{border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;background:var(--bg2);position:sticky;top:0;z-index:100}
+/* HEADER */
+header{border-bottom:1px solid var(--border);padding:13px 24px;display:flex;align-items:center;justify-content:space-between;background:var(--bg2);position:sticky;top:0;z-index:100}
 .logo{display:flex;align-items:center;gap:10px}
 .logo-mark{width:32px;height:32px;border:1.5px solid var(--gold);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;color:var(--gold);letter-spacing:.05em}
 .logo-text{font-weight:700;font-size:15px;letter-spacing:.02em}
 .logo-sub{font-size:10px;color:var(--text2);font-family:var(--mono);letter-spacing:.08em}
-.header-right{display:flex;align-items:center;gap:16px}
+.hdr-right{display:flex;align-items:center;gap:14px}
 #sessionBadge{font-family:var(--mono);font-size:11px;letter-spacing:.05em;padding:4px 10px;border-radius:2px;border:1px solid var(--border2);color:var(--text2);transition:all .3s}
-#sessionBadge.active{color:var(--green);border-color:rgba(34,197,94,0.3);background:var(--green-dim)}
+#sessionBadge.active{color:var(--green);border-color:rgba(34,197,94,0.35);background:var(--green-dim)}
 #clockEl{font-family:var(--mono);font-size:12px;color:var(--text2)}
 
-.container{max-width:1440px;margin:0 auto;padding:20px 24px}
-.grid{display:grid;grid-template-columns:1fr 1fr 260px;gap:16px}
-.col{display:flex;flex-direction:column;gap:14px}
+/* LAYOUT */
+.container{max-width:1440px;margin:0 auto;padding:18px 24px}
+.grid{display:grid;grid-template-columns:1fr 1fr 256px;gap:14px}
+.col{display:flex;flex-direction:column;gap:12px}
 
-.panel{background:var(--panel);border:1px solid var(--border);border-radius:2px;overflow:hidden;transition:border-color .2s}
-.panel:focus-within{border-color:var(--border2)}
-.panel-head{padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+/* PANEL */
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:2px}
+.panel-head{padding:9px 15px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
 .panel-title{font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--text2);text-transform:uppercase}
-.panel-tag{font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:2px;border:1px solid var(--border2);color:var(--text3);transition:all .2s}
-.panel-body{padding:14px 16px}
+.ptag{font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:2px;border:1px solid var(--border2);color:var(--text3);transition:all .25s}
+.ptag.bull{color:var(--green);border-color:rgba(34,197,94,0.3)}
+.ptag.bear{color:var(--red);border-color:rgba(239,68,68,0.3)}
+.panel-body{padding:13px 15px}
 
-.field-label{font-family:var(--mono);font-size:10px;color:var(--text2);letter-spacing:.04em;display:block;margin-bottom:4px}
-input[type=number],select{background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:13px;padding:7px 10px;border-radius:2px;outline:none;transition:border-color .2s;-moz-appearance:textfield}
-input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+/* INPUTS */
+.flabel{font-family:var(--mono);font-size:10px;color:var(--text2);letter-spacing:.04em;display:block;margin-bottom:4px}
+input[type=number],select{
+  background:var(--bg3);border:1px solid var(--border);color:var(--text);
+  font-family:var(--mono);font-size:13px;padding:7px 10px;border-radius:2px;
+  outline:none;transition:border-color .2s;-moz-appearance:textfield;width:100%
+}
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none}
 input[type=number]:focus,select:focus{border-color:var(--gold)}
+input.highlighted{border-color:var(--gold);background:rgba(240,180,41,0.06)}
 select{cursor:pointer}
+.ig{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:11px}
+.ig2{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:11px}
 
-.inputs-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px}
-.input-full{grid-column:1/-1}
+/* STATS BAR */
+.stats-bar{display:flex;border-top:1px solid var(--border);margin-top:9px}
+.sstat{flex:1;padding:8px 10px;border-right:1px solid var(--border)}
+.sstat:last-child{border-right:none}
+.sslabel{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.07em;text-transform:uppercase}
+.ssval{font-family:var(--mono);font-size:14px;color:var(--text);margin-top:3px;font-weight:700}
+.ssval.warn{color:var(--amber)}
+.ssval.danger{color:var(--red)}
+.ssval.green{color:var(--green)}
+.ssval.gold{color:var(--gold)}
 
 .spread-warn{font-family:var(--mono);font-size:10px;color:var(--red);background:var(--red-dim);border:1px solid rgba(239,68,68,0.2);padding:7px 10px;display:none;letter-spacing:.02em;line-height:1.6;margin-top:8px}
 
-.stats-row{display:flex;gap:0;border-top:1px solid var(--border);margin-top:10px}
-.stat{flex:1;padding:9px 12px;border-right:1px solid var(--border)}
-.stat:last-child{border-right:none}
-.stat-label{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase}
-.stat-val{font-family:var(--mono);font-size:15px;color:var(--text);margin-top:3px;font-weight:700}
-.stat-val.warn{color:var(--amber)}
-.stat-val.danger{color:var(--red)}
-.stat-val.gold{color:var(--gold)}
-
-/* ── CANDLE SECTION ── */
-.candle-section{display:flex;gap:12px;align-items:stretch}
+/* CANDLE VIZ */
+.candle-wrap{display:flex;gap:11px;align-items:stretch}
 .candle-stage{
-  flex:0 0 180px;background:var(--bg3);border:1px solid var(--border);border-radius:2px;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:10px 8px;position:relative;overflow:hidden;min-height:270px
+  flex:0 0 160px;background:var(--bg3);border:1px solid var(--border);border-radius:2px;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  padding:8px 6px 10px;position:relative;overflow:hidden;min-height:280px
 }
-.box-zone{
-  position:absolute;left:20px;right:20px;background:rgba(240,180,41,0.07);
-  border-left:1px dashed rgba(240,180,41,0.3);border-right:1px dashed rgba(240,180,41,0.3);
-  transition:top .4s,height .4s
-}
-.box-label-hi{position:absolute;right:4px;font-family:var(--mono);font-size:8px;color:var(--gold);opacity:.7;transition:top .4s}
-.box-label-lo{position:absolute;right:4px;font-family:var(--mono);font-size:8px;color:var(--gold);opacity:.7;transition:top .4s}
-.box-line-hi{position:absolute;left:20px;right:20px;height:1px;background:rgba(240,180,41,0.5);transition:top .4s}
-.box-line-lo{position:absolute;left:20px;right:20px;height:1px;background:rgba(240,180,41,0.5);transition:top .4s}
+.box-zone{position:absolute;left:18px;right:18px;background:rgba(240,180,41,0.06);border-left:1px dashed rgba(240,180,41,0.25);border-right:1px dashed rgba(240,180,41,0.25)}
+.box-line{position:absolute;left:18px;right:18px;height:1px;background:rgba(240,180,41,0.45)}
+.box-lbl{position:absolute;right:3px;font-family:var(--mono);font-size:8px;color:var(--gold);opacity:.7;line-height:1}
+.brk-arrow{position:absolute;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:20px;opacity:0;transition:opacity .35s;z-index:4;pointer-events:none}
+#cvSVG{position:relative;z-index:3;display:block}
+.cs-label{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.07em;text-transform:uppercase;margin-top:6px;position:relative;z-index:5;text-align:center}
+.cs-mode{font-family:var(--mono);font-size:10px;font-weight:700;margin-top:2px;position:relative;z-index:5;letter-spacing:.04em;text-align:center;min-height:14px;transition:color .25s}
 
-#candleSVG{position:relative;z-index:2;transition:all .3s;overflow:visible}
+.candle-ctrls{flex:1;display:flex;flex-direction:column;gap:7px}
+.candle-ctrls select{width:100%}
 
-.candle-stage-label{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-top:8px;position:relative;z-index:2}
-.candle-stage-mode{font-family:var(--mono);font-size:10px;font-weight:700;margin-top:3px;position:relative;z-index:2;letter-spacing:.04em;min-height:14px;transition:color .3s}
+/* SUGGESTION BOX - no innerHTML injection, use textContent via spans */
+.suggestion-box{padding:9px 11px;background:var(--bg3);border-left:2px solid var(--gold);font-family:var(--mono);font-size:11px;line-height:1.65;flex:1;display:flex;flex-direction:column;gap:3px}
+.sug-badge{font-size:10px;font-weight:700;letter-spacing:.06em;padding:2px 7px;border-radius:2px;display:inline-block;width:fit-content}
+.sug-badge.gold{background:var(--gold-dim);color:var(--gold);border:1px solid rgba(240,180,41,0.3)}
+.sug-badge.green{background:var(--green-dim);color:var(--green);border:1px solid rgba(34,197,94,0.3)}
+.sug-badge.red{background:var(--red-dim);color:var(--red);border:1px solid rgba(239,68,68,0.3)}
+.sug-badge.gray{background:var(--bg2);color:var(--text3);border:1px solid var(--border2)}
+.sug-text{font-size:11px;color:var(--text2);line-height:1.6}
 
-.break-arrow{position:absolute;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:18px;opacity:0;transition:all .4s;z-index:3}
+/* SIGNALS */
+.signals{display:flex;flex-direction:column;gap:4px}
+.sig-row{display:flex;align-items:center;gap:7px;padding:5px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:2px;font-family:var(--mono);font-size:10px;color:var(--text2)}
+.sig-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;background:var(--text3);transition:all .25s}
+.sig-dot.go{background:var(--green);box-shadow:0 0 5px rgba(34,197,94,0.5)}
+.sig-dot.warn{background:var(--amber);box-shadow:0 0 5px rgba(245,158,11,0.4)}
+.sig-dot.stop{background:var(--red);box-shadow:0 0 5px rgba(239,68,68,0.4)}
 
-.candle-controls{flex:1;display:flex;flex-direction:column;gap:8px}
-.candle-controls select{width:100%}
-.mode-suggestion{padding:9px 11px;background:var(--bg3);border-left:2px solid var(--gold);font-size:11px;color:var(--text2);line-height:1.6;font-family:var(--mono);letter-spacing:.02em;flex:1}
-.mode-suggestion .tag{color:var(--gold);font-weight:700}
-.mode-suggestion .tag.green{color:var(--green)}
-.mode-suggestion .tag.red{color:var(--red)}
-.mode-suggestion .tag.gray{color:var(--text3)}
+.mode-btns{display:flex;gap:7px;margin-top:7px}
+.mbtn{flex:1;padding:8px 4px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-family:var(--mono);font-size:11px;cursor:pointer;border-radius:2px;letter-spacing:.06em;text-transform:uppercase;transition:all .15s}
+.mbtn:hover{border-color:var(--border2);color:var(--text)}
+.mbtn.active{background:var(--gold-dim);border-color:var(--gold);color:var(--gold)}
+.mbtn.suggest{background:rgba(240,180,41,0.07);border-color:rgba(240,180,41,0.45);color:var(--amber);animation:pulse-b 1.6s ease-in-out infinite}
+@keyframes pulse-b{0%,100%{border-color:rgba(240,180,41,0.35)}50%{border-color:var(--gold)}}
 
-/* CONFIRMATION SIGNALS */
-.confirm-signals{display:flex;flex-direction:column;gap:4px;margin-top:8px}
-.signal-row{display:flex;align-items:center;gap:7px;padding:5px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:2px;font-family:var(--mono);font-size:10px;color:var(--text2)}
-.signal-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;background:var(--text3);transition:all .3s}
-.signal-dot.go{background:var(--green);box-shadow:0 0 5px rgba(34,197,94,0.5)}
-.signal-dot.warn{background:var(--amber);box-shadow:0 0 5px rgba(245,158,11,0.5)}
-.signal-dot.stop{background:var(--red);box-shadow:0 0 5px rgba(239,68,68,0.4)}
+/* TRADE LEVELS */
+.lvl-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.lvl-card{background:var(--bg3);border:1px solid var(--border);border-radius:2px;padding:10px 12px;position:relative;overflow:hidden}
+.lvl-card.entry-card{border-color:rgba(240,180,41,0.25);background:rgba(240,180,41,0.04)}
+.lvl-lbl{font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em}
+.lvl-val{font-family:var(--mono);font-size:18px;font-weight:700;margin-top:4px;color:var(--text);transition:color .2s}
+.lvl-val.green{color:var(--green)}
+.lvl-val.red{color:var(--red)}
+.lvl-val.gold{color:var(--gold)}
+.lvl-sub{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:2px}
+.profit-pill{position:absolute;top:8px;right:8px;font-family:var(--mono);font-size:10px;font-weight:700;padding:2px 7px;border-radius:2px;background:var(--green-mid);color:var(--green);border:1px solid rgba(34,197,94,0.28)}
 
-.mode-btns{display:flex;gap:8px;margin-top:8px}
-.mode-btn{flex:1;padding:9px 6px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-family:var(--mono);font-size:11px;cursor:pointer;border-radius:2px;letter-spacing:.06em;text-transform:uppercase;transition:all .15s}
-.mode-btn:hover{border-color:var(--border2);color:var(--text)}
-.mode-btn.active{background:var(--gold-dim);border-color:var(--gold);color:var(--gold)}
-.mode-btn.suggest{background:rgba(240,180,41,0.07);border-color:rgba(240,180,41,0.4);color:var(--amber);animation:pulse-border 1.5s ease-in-out infinite}
-@keyframes pulse-border{0%,100%{border-color:rgba(240,180,41,0.4)}50%{border-color:var(--gold)}}
+/* PROFIT SUMMARY */
+.profit-summary{margin-top:9px;padding:11px 13px;background:var(--bg3);border:1px solid var(--border);border-radius:2px}
+.ps-row{display:flex;align-items:center;gap:0;flex-wrap:wrap}
+.ps-item{flex:1;min-width:80px;padding:0 10px;border-right:1px solid var(--border)}
+.ps-item:first-child{padding-left:0}
+.ps-item:last-child{border-right:none}
+.ps-lbl{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.07em;text-transform:uppercase}
+.ps-val{font-family:var(--mono);font-size:16px;font-weight:700;margin-top:3px}
+.ps-val.green{color:var(--green)}
+.ps-val.red{color:var(--red)}
+.ps-val.muted{color:var(--text2)}
 
-/* LEVELS */
-.levels-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.level-card{background:var(--bg3);border:1px solid var(--border);border-radius:2px;padding:10px 12px;transition:border-color .2s}
-.level-lbl{font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em}
-.level-val{font-family:var(--mono);font-size:17px;font-weight:700;margin-top:4px;color:var(--text);transition:color .2s}
-.level-val.green{color:var(--green)}
-.level-val.red{color:var(--red)}
-.level-val.gold{color:var(--gold)}
-.level-sub{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:2px}
-.level-profit{font-family:var(--mono);font-size:11px;margin-top:3px;font-weight:700}
-.level-profit.green{color:var(--green)}
-.level-card.tp-card{position:relative;overflow:hidden}
-.tp-profit-badge{
-  position:absolute;top:8px;right:8px;
-  font-family:var(--mono);font-size:10px;font-weight:700;
-  padding:2px 7px;border-radius:2px;
-  background:var(--green-mid);color:var(--green);
-  border:1px solid rgba(34,197,94,0.3);
-  transition:all .2s
-}
-
-.rr-section{margin-top:12px}
+/* RR BAR */
+.rr-wrap{margin-top:10px}
 .rr-labels{display:flex;justify-content:space-between;margin-bottom:5px}
-.rr-label-txt{font-family:var(--mono);font-size:10px;color:var(--text3)}
-.rr-track{height:4px;background:var(--bg3);border-radius:0;position:relative;overflow:visible}
+.rr-lbl{font-family:var(--mono);font-size:10px;color:var(--text3)}
+.rr-track{height:4px;background:var(--bg3);position:relative;overflow:visible}
 .rr-fill{height:4px;background:var(--gold);transition:width .4s cubic-bezier(.4,0,.2,1);position:relative}
 .rr-fill::after{content:'';position:absolute;right:-1px;top:-3px;width:10px;height:10px;background:var(--gold);border-radius:50%}
-.rr-min-line{position:absolute;left:33.3%;top:-4px;width:1px;height:12px;background:var(--border2)}
-.rr-min-label{position:absolute;left:33.3%;top:10px;transform:translateX(-50%);font-family:var(--mono);font-size:9px;color:var(--text3);white-space:nowrap}
+.rr-min{position:absolute;left:33.3%;top:-4px;width:1px;height:12px;background:var(--border2)}
+.rr-min-lbl{position:absolute;left:33.3%;top:11px;transform:translateX(-50%);font-family:var(--mono);font-size:9px;color:var(--text3);white-space:nowrap}
 
 /* CHECKLIST */
-.checklist{display:flex;flex-direction:column;gap:6px}
-.check-item{display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:2px;cursor:pointer;transition:all .15s;user-select:none}
-.check-item:hover{border-color:var(--border2)}
-.check-item.done{border-color:rgba(34,197,94,0.2);background:rgba(34,197,94,0.04)}
-.check-box{width:14px;height:14px;border:1px solid var(--border2);border-radius:2px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s}
-.check-item.done .check-box{background:var(--green);border-color:var(--green)}
-.check-tick{display:none;width:8px;height:6px}
-.check-tick path{stroke:#000;stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round}
-.check-item.done .check-tick{display:block}
-.check-text{font-family:var(--mono);font-size:11px;color:var(--text2);letter-spacing:.02em;line-height:1.4}
-.check-item.done .check-text{color:var(--text3)}
+.checklist{display:flex;flex-direction:column;gap:5px}
+.chk{display:flex;align-items:center;gap:9px;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:2px;cursor:pointer;transition:all .15s;user-select:none}
+.chk:hover{border-color:var(--border2)}
+.chk.done{border-color:rgba(34,197,94,0.22);background:rgba(34,197,94,0.04)}
+.chk-box{width:14px;height:14px;border:1px solid var(--border2);border-radius:2px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.chk.done .chk-box{background:var(--green);border-color:var(--green)}
+.chk-tick{display:none;width:8px;height:6px}
+.chk-tick path{stroke:#000;stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.chk.done .chk-tick{display:block}
+.chk-text{font-family:var(--mono);font-size:11px;color:var(--text2);line-height:1.4}
+.chk.done .chk-text{color:var(--text3)}
 
-.trade-btn{width:100%;margin-top:12px;padding:13px;background:var(--bg3);border:1px solid var(--border);color:var(--text3);font-family:var(--mono);font-size:12px;cursor:not-allowed;letter-spacing:.08em;text-transform:uppercase;border-radius:2px;transition:all .2s}
-.trade-btn.ready{background:var(--gold-dim);border-color:var(--gold);color:var(--gold);cursor:pointer;animation:glow-btn 2s ease-in-out infinite}
-@keyframes glow-btn{0%,100%{box-shadow:0 0 0 0 var(--gold-glow)}50%{box-shadow:0 0 16px 2px var(--gold-glow)}}
-.trade-btn.ready:hover{background:rgba(240,180,41,0.2)}
+.trade-btn{width:100%;margin-top:10px;padding:12px;background:var(--bg3);border:1px solid var(--border);color:var(--text3);font-family:var(--mono);font-size:12px;cursor:not-allowed;letter-spacing:.08em;text-transform:uppercase;border-radius:2px;transition:all .2s}
+.trade-btn.ready{background:var(--gold-dim);border-color:var(--gold);color:var(--gold);cursor:default;animation:glow-b 2s ease-in-out infinite}
+@keyframes glow-b{0%,100%{box-shadow:0 0 0 0 var(--gold-glow)}50%{box-shadow:0 0 14px 2px var(--gold-glow)}}
 
 /* MTF */
-.mtf-bars{display:flex;flex-direction:column;gap:0}
-.mtf-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)}
+.mtf-list{display:flex;flex-direction:column}
+.mtf-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)}
 .mtf-row:last-child{border-bottom:none}
 .mtf-tf{font-family:var(--mono);font-size:11px;color:var(--text2);min-width:32px}
-.mtf-select{background:transparent;border:none;color:var(--text2);font-family:var(--mono);font-size:11px;cursor:pointer;outline:none}
-.mtf-select option{background:var(--bg3)}
-.mtf-dot{width:8px;height:8px;border-radius:50%;background:var(--text3);transition:all .2s;flex-shrink:0;margin-left:8px}
+.mtf-sel{background:transparent;border:none;color:var(--text2);font-family:var(--mono);font-size:11px;cursor:pointer;outline:none}
+.mtf-sel option{background:var(--bg3)}
+.mtf-dot{width:8px;height:8px;border-radius:50%;background:var(--text3);transition:all .2s;flex-shrink:0;margin-left:6px}
 .mtf-dot.bull{background:var(--green);box-shadow:0 0 6px rgba(34,197,94,0.5)}
 .mtf-dot.bear{background:var(--red);box-shadow:0 0 6px rgba(239,68,68,0.5)}
-.mtf-score{margin-top:12px;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:2px}
-.mtf-score-label{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase}
-.mtf-score-val{font-family:var(--mono);font-size:14px;font-weight:700;margin-top:4px}
+.mtf-score{margin-top:10px;padding:9px 11px;background:var(--bg3);border:1px solid var(--border);border-radius:2px}
+.mtf-score-lbl{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase}
+.mtf-score-val{font-family:var(--mono);font-size:14px;font-weight:700;margin-top:3px}
 .mtf-advice{font-family:var(--mono);font-size:10px;color:var(--text2);margin-top:4px;line-height:1.5}
 
-.session-card{padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:2px;margin-bottom:6px}
-.session-card:last-child{margin-bottom:0}
-.session-name{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text2)}
-.session-name.active{color:var(--green)}
-.session-times{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:3px}
+/* SESSIONS */
+.sess-card{padding:9px 11px;background:var(--bg3);border:1px solid var(--border);border-radius:2px;margin-bottom:5px}
+.sess-card:last-child{margin-bottom:0}
+.sess-name{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text2)}
+.sess-name.active{color:var(--green)}
+.sess-time{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:3px}
 
-.notes-box{width:100%;min-height:72px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-family:var(--mono);font-size:11px;padding:8px 10px;border-radius:2px;resize:vertical;outline:none;line-height:1.6}
+/* TIPS */
+.tip{font-family:var(--mono);font-size:10px;color:var(--text2);line-height:1.7;border-left:2px solid var(--border2);padding-left:9px;margin-bottom:7px}
+.tip:last-child{margin-bottom:0}
+
+/* NOTES */
+.notes-box{width:100%;min-height:68px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-family:var(--mono);font-size:11px;padding:8px 10px;border-radius:2px;resize:vertical;outline:none;line-height:1.6}
 .notes-box:focus{border-color:var(--border2)}
 
-.tip-item{font-family:var(--mono);font-size:10px;color:var(--text2);line-height:1.7;border-left:2px solid var(--border2);padding-left:10px;margin-bottom:8px}
-.tip-item:last-child{margin-bottom:0}
+hr{border:none;border-top:1px solid var(--border);margin:9px 0}
 
-hr{border:none;border-top:1px solid var(--border);margin:10px 0}
+/* ENTRY INPUT HIGHLIGHT */
+.entry-input-group{padding:11px 13px;background:var(--bg3);border:1px solid rgba(240,180,41,0.2);border-radius:2px;margin-bottom:10px}
+.entry-input-group .flabel{color:var(--gold)}
+.entry-row{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 
-@media(max-width:1100px){.grid{grid-template-columns:1fr 1fr}.col:last-child{grid-column:1/-1;flex-direction:row;flex-wrap:wrap}.col:last-child .panel{flex:1;min-width:220px}}
-@media(max-width:660px){.grid{grid-template-columns:1fr}.col:last-child{flex-direction:column}.candle-section{flex-direction:column}.candle-stage{min-height:160px}.inputs-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:1100px){.grid{grid-template-columns:1fr 1fr}.col:last-child{grid-column:1/-1;flex-direction:row;flex-wrap:wrap}.col:last-child .panel{flex:1;min-width:210px}}
+@media(max-width:660px){.grid{grid-template-columns:1fr}.col:last-child{flex-direction:column}.candle-wrap{flex-direction:column}.candle-stage{min-height:200px}.ig{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
@@ -201,7 +218,7 @@ hr{border:none;border-top:1px solid var(--border);margin:10px 0}
       <div class="logo-sub">XAUUSD · Scalping Dashboard</div>
     </div>
   </div>
-  <div class="header-right">
+  <div class="hdr-right">
     <div id="sessionBadge">— SESSION —</div>
     <div id="clockEl">00:00:00 UTC</div>
   </div>
@@ -213,94 +230,58 @@ hr{border:none;border-top:1px solid var(--border);margin:10px 0}
 <!-- ══ COL 1 ══ -->
 <div class="col">
 
-  <!-- PANEL 01: Box Setup -->
+  <!-- 01: Box Setup -->
   <div class="panel">
     <div class="panel-head">
-      <span class="panel-title">01 · Price & Box Setup</span>
-      <span class="panel-tag">XAUUSD</span>
+      <span class="panel-title">01 · Box Setup</span>
+      <span class="ptag" id="spreadTag">XAUUSD</span>
     </div>
     <div class="panel-body">
-      <div class="inputs-grid">
-        <div>
-          <label class="field-label">Box High</label>
-          <input type="number" id="bHigh" value="3320.00" step="0.01" oninput="calc()" style="width:100%">
-        </div>
-        <div>
-          <label class="field-label">Box Low</label>
-          <input type="number" id="bLow" value="3315.00" step="0.01" oninput="calc()" style="width:100%">
-        </div>
-        <div>
-          <label class="field-label">Spread (pts)</label>
-          <input type="number" id="spread" value="25" step="1" min="1" oninput="calc()" style="width:100%">
-        </div>
-        <div>
-          <label class="field-label">Account (USD)</label>
-          <input type="number" id="acct" value="20" step="1" oninput="calc()" style="width:100%">
-        </div>
-        <div>
-          <label class="field-label">Risk %</label>
-          <input type="number" id="riskPct" value="1" step="0.1" min="0.1" max="5" oninput="calc()" style="width:100%">
-        </div>
-        <div>
-          <label class="field-label">Leverage</label>
-          <input type="number" id="leverage" value="1000" step="100" min="1" oninput="calc()" style="width:100%">
-        </div>
+      <div class="ig">
+        <div><label class="flabel">Box High</label><input type="number" id="bHigh" value="3320.00" step="0.01" oninput="onBoxChange()"></div>
+        <div><label class="flabel">Box Low</label><input type="number" id="bLow" value="3315.00" step="0.01" oninput="onBoxChange()"></div>
+        <div><label class="flabel">Spread (pts)</label><input type="number" id="spread" value="25" step="1" min="1" oninput="onBoxChange()"></div>
+        <div><label class="flabel">Account (USD)</label><input type="number" id="acct" value="20" step="1" oninput="onBoxChange()"></div>
+        <div><label class="flabel">Risk %</label><input type="number" id="riskPct" value="1" step="0.1" min="0.1" max="5" oninput="onBoxChange()"></div>
+        <div><label class="flabel">Leverage</label><input type="number" id="leverage" value="1000" step="100" min="1" oninput="onBoxChange()"></div>
       </div>
-      <div id="spreadWarn" class="spread-warn">⚠ Spread exceeds 30% of box range — box is too tight to trade safely. Wait for a bigger range or lower spread.</div>
-      <div class="stats-row">
-        <div class="stat">
-          <div class="stat-label">Range</div>
-          <div class="stat-val" id="sRange">—</div>
-        </div>
-        <div class="stat">
-          <div class="stat-label">Pips</div>
-          <div class="stat-val" id="sRangePips">—</div>
-        </div>
-        <div class="stat">
-          <div class="stat-label">Spread</div>
-          <div class="stat-val" id="sSpread">—</div>
-        </div>
-        <div class="stat">
-          <div class="stat-label">Risk $</div>
-          <div class="stat-val gold" id="sRiskDollar">—</div>
-        </div>
-        <div class="stat">
-          <div class="stat-label">Max profit</div>
-          <div class="stat-val" style="color:var(--green)" id="sMaxProfit">—</div>
-        </div>
+      <div id="spreadWarn" class="spread-warn">⚠ Spread exceeds 30% of box range — box too tight. Wait for a wider range.</div>
+      <div class="stats-bar">
+        <div class="sstat"><div class="sslabel">Range pts</div><div class="ssval" id="sRange">—</div></div>
+        <div class="sstat"><div class="sslabel">Range pips</div><div class="ssval" id="sRangePips">—</div></div>
+        <div class="sstat"><div class="sslabel">Spread</div><div class="ssval" id="sSpread">—</div></div>
+        <div class="sstat"><div class="sslabel">Risk $</div><div class="ssval gold" id="sRiskDollar">—</div></div>
+        <div class="sstat"><div class="sslabel">Max profit</div><div class="ssval green" id="sMaxProfit">—</div></div>
       </div>
     </div>
   </div>
 
-  <!-- PANEL 02: Candle Character -->
+  <!-- 02: Candle Character -->
   <div class="panel">
     <div class="panel-head">
       <span class="panel-title">02 · Candle Character</span>
-      <span class="panel-tag" id="dirTag">—</span>
+      <span class="ptag" id="dirTag">—</span>
     </div>
     <div class="panel-body">
-      <div class="candle-section">
+      <div class="candle-wrap">
 
-        <!-- LIVE CANDLE VISUALISATION -->
+        <!-- LIVE CANDLE STAGE -->
         <div class="candle-stage" id="candleStage">
-          <!-- box zone background -->
-          <div class="box-zone" id="boxZone"></div>
-          <div class="box-line-hi" id="boxLineHi"></div>
-          <div class="box-line-lo" id="boxLineLo"></div>
-          <div class="box-label-hi" id="boxLabelHi">HIGH</div>
-          <div class="box-label-lo" id="boxLabelLo">LOW</div>
-          <!-- break arrow -->
-          <div class="break-arrow" id="breakArrow"></div>
-          <!-- candle svg -->
-          <svg id="candleSVG" width="48" height="240" viewBox="0 0 48 240"></svg>
-          <div class="candle-stage-label" id="stageLabel">SELECT CANDLE</div>
-          <div class="candle-stage-mode" id="stageMode"></div>
+          <div class="box-zone" id="cvBoxZone"></div>
+          <div class="box-line" id="cvLineHi"></div>
+          <div class="box-line" id="cvLineLo"></div>
+          <div class="box-lbl" id="cvLblHi">HIGH</div>
+          <div class="box-lbl" id="cvLblLo">LOW</div>
+          <div class="brk-arrow" id="cvArrow"></div>
+          <svg id="cvSVG" width="52" height="260" viewBox="0 0 52 260"></svg>
+          <div class="cs-label" id="csLabel">SELECT CANDLE</div>
+          <div class="cs-mode" id="csMode"></div>
         </div>
 
         <!-- CONTROLS -->
-        <div class="candle-controls">
+        <div class="candle-ctrls">
           <div>
-            <label class="field-label">Candle body</label>
+            <label class="flabel">Candle body</label>
             <select id="cBody" onchange="readCandle()">
               <option value="big_bull">Big bullish body</option>
               <option value="big_bear">Big bearish body</option>
@@ -312,7 +293,7 @@ hr{border:none;border-top:1px solid var(--border);margin:10px 0}
             </select>
           </div>
           <div>
-            <label class="field-label">Position in box</label>
+            <label class="flabel">Position in box</label>
             <select id="cPos" onchange="readCandle()">
               <option value="top">At box top</option>
               <option value="bottom">At box bottom</option>
@@ -322,615 +303,689 @@ hr{border:none;border-top:1px solid var(--border);margin:10px 0}
             </select>
           </div>
 
-          <div class="mode-suggestion" id="modeDesc">
-            <span class="tag">—</span> Select candle character
+          <!-- SUGGESTION — built with DOM, no innerHTML -->
+          <div class="suggestion-box">
+            <span class="sug-badge gold" id="sugBadge">—</span>
+            <span class="sug-text" id="sugText">Select candle character and position</span>
           </div>
 
-          <!-- CONFIRMATION SIGNALS -->
-          <div class="confirm-signals">
-            <div class="signal-row"><div class="signal-dot" id="sig1"></div><span id="sig1txt">Candle body strength</span></div>
-            <div class="signal-row"><div class="signal-dot" id="sig2"></div><span id="sig2txt">Position in box</span></div>
-            <div class="signal-row"><div class="signal-dot" id="sig3"></div><span id="sig3txt">Setup quality</span></div>
+          <!-- SIGNALS -->
+          <div class="signals">
+            <div class="sig-row"><div class="sig-dot" id="sig1"></div><span id="sig1txt">Body strength</span></div>
+            <div class="sig-row"><div class="sig-dot" id="sig2"></div><span id="sig2txt">Edge position</span></div>
+            <div class="sig-row"><div class="sig-dot" id="sig3"></div><span id="sig3txt">Setup quality</span></div>
           </div>
         </div>
       </div>
 
       <div class="mode-btns">
-        <button class="mode-btn" id="mBreak" onclick="setMode('breakout')">Breakout</button>
-        <button class="mode-btn" id="mRetest" onclick="setMode('retest')">Retest</button>
-        <button class="mode-btn" id="mRev" onclick="setMode('reversal')">Reversal</button>
+        <button class="mbtn" id="mBreak" onclick="setMode('breakout')">Breakout</button>
+        <button class="mbtn" id="mRetest" onclick="setMode('retest')">Retest</button>
+        <button class="mbtn" id="mRev" onclick="setMode('reversal')">Reversal</button>
       </div>
     </div>
   </div>
 
-</div><!-- end col1 -->
+</div><!-- col1 -->
 
 <!-- ══ COL 2 ══ -->
 <div class="col">
 
-  <!-- PANEL 03: Trade Levels -->
+  <!-- 03: Entry & Lot -->
   <div class="panel">
     <div class="panel-head">
-      <span class="panel-title">03 · Trade Levels</span>
-      <span class="panel-tag" id="modeTag">—</span>
+      <span class="panel-title">03 · Your Entry</span>
+      <span class="ptag" id="modeTag">—</span>
     </div>
     <div class="panel-body">
-      <div class="levels-grid">
-        <div class="level-card">
-          <div class="level-lbl">Entry</div>
-          <div class="level-val gold" id="lEntry">—</div>
-          <div class="level-sub" id="lDir">— direction</div>
+      <div class="entry-input-group">
+        <div class="entry-row">
+          <div>
+            <label class="flabel">Entry Price</label>
+            <input type="number" id="entryPrice" value="" step="0.01" placeholder="e.g. 3320.25" oninput="calc()" class="highlighted">
+          </div>
+          <div>
+            <label class="flabel">Lot Size</label>
+            <input type="number" id="lotSize" value="" step="0.01" min="0.01" placeholder="e.g. 0.01" oninput="calc()" class="highlighted">
+          </div>
         </div>
-        <div class="level-card">
-          <div class="level-lbl">Stop Loss</div>
-          <div class="level-val red" id="lSL">—</div>
-          <div class="level-sub" id="lSLPips">— pips (incl. spread)</div>
-        </div>
-        <div class="level-card tp-card">
-          <div class="level-lbl">TP 1 · 1.5R</div>
-          <div class="level-val green" id="lTP1">—</div>
-          <div class="level-sub" id="lTP1Pips">—</div>
-          <div class="tp-profit-badge" id="tp1profit">$—</div>
-        </div>
-        <div class="level-card tp-card">
-          <div class="level-lbl">TP 2 · 2.5R</div>
-          <div class="level-val green" id="lTP2">—</div>
-          <div class="level-sub" id="lTP2Pips">—</div>
-          <div class="tp-profit-badge" id="tp2profit">$—</div>
-        </div>
-        <div class="level-card">
-          <div class="level-lbl">Risk Amount</div>
-          <div class="level-val" id="lRisk">—</div>
-          <div class="level-sub" id="lRiskPct">— % of account</div>
-        </div>
-        <div class="level-card">
-          <div class="level-lbl">Lot Size</div>
-          <div class="level-val gold" id="lLot">—</div>
-          <div class="level-sub" id="lLotNote">min 0.01 lots</div>
+        <div style="margin-top:7px;font-family:var(--mono);font-size:10px;color:var(--text3);line-height:1.6" id="entrySuggest">
+          Enter your actual entry price and lot size — TP &amp; SL will auto-calculate below.
         </div>
       </div>
 
-      <!-- PROFIT SUMMARY BAR -->
-      <div style="margin-top:10px;padding:10px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:2px">
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-          <div>
-            <div class="stat-label" style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.08em">IF TP1 HIT</div>
-            <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--green);margin-top:2px" id="profitTP1">$—</div>
+      <!-- CALCULATED LEVELS -->
+      <div class="lvl-grid">
+        <div class="lvl-card entry-card">
+          <div class="lvl-lbl">Entry (yours)</div>
+          <div class="lvl-val gold" id="lEntry">—</div>
+          <div class="lvl-sub" id="lDir">— direction</div>
+        </div>
+        <div class="lvl-card">
+          <div class="lvl-lbl">Stop Loss</div>
+          <div class="lvl-val red" id="lSL">—</div>
+          <div class="lvl-sub" id="lSLPips">— pips</div>
+        </div>
+        <div class="lvl-card" style="position:relative;overflow:hidden">
+          <div class="lvl-lbl">TP · your R:R</div>
+          <div class="lvl-val green" id="lTP1">—</div>
+          <div class="lvl-sub" id="lTP1Pips">—</div>
+          <div class="profit-pill" id="tp1pill">+$—</div>
+        </div>
+        <div class="lvl-card" style="position:relative;overflow:hidden">
+          <div class="lvl-lbl">TP 2 · 2.5R</div>
+          <div class="lvl-val green" id="lTP2">—</div>
+          <div class="lvl-sub" id="lTP2Pips">—</div>
+          <div class="profit-pill" id="tp2pill">+$—</div>
+        </div>
+        <div class="lvl-card">
+          <div class="lvl-lbl">Suggested Lot</div>
+          <div class="lvl-val" id="lSugLot">—</div>
+          <div class="lvl-sub" id="lSugLotNote">based on 1% risk</div>
+        </div>
+        <div class="lvl-card">
+          <div class="lvl-lbl">R:R Ratio</div>
+          <div class="lvl-val gold" id="lRR">—</div>
+          <div class="lvl-sub" id="lRRNote">— mode</div>
+        </div>
+      </div>
+
+      <!-- PROFIT SUMMARY -->
+      <div class="profit-summary">
+        <div class="ps-row">
+          <div class="ps-item">
+            <div class="ps-lbl">TP profit (your RR)</div>
+            <div class="ps-val green" id="psTP1">$—</div>
           </div>
-          <div style="color:var(--text3);font-family:var(--mono);font-size:14px">→</div>
-          <div>
-            <div class="stat-label" style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.08em">IF TP2 HIT</div>
-            <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--green);margin-top:2px" id="profitTP2">$—</div>
+          <div class="ps-item">
+            <div class="ps-lbl">TP at 2.5R ref</div>
+            <div class="ps-val green" id="psTP2">$—</div>
           </div>
-          <div style="color:var(--text3);font-family:var(--mono);font-size:14px">✕</div>
-          <div>
-            <div class="stat-label" style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.08em">IF SL HIT</div>
-            <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--red);margin-top:2px" id="lossIfSL">$—</div>
+          <div class="ps-item">
+            <div class="ps-lbl">SL loss</div>
+            <div class="ps-val red" id="psSL">$—</div>
           </div>
-          <div>
-            <div class="stat-label" style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.08em">Acct after SL</div>
-            <div style="font-family:var(--mono);font-size:14px;color:var(--text2);margin-top:2px" id="acctAfterSL">$—</div>
+          <div class="ps-item">
+            <div class="ps-lbl">Acct after SL</div>
+            <div class="ps-val muted" id="psAcct">$—</div>
           </div>
         </div>
       </div>
 
-      <div class="rr-section">
-        <div class="rr-labels">
-          <span class="rr-label-txt">R:R ratio</span>
-          <span class="rr-label-txt" id="rrVal">—</span>
+      <div class="rr-wrap">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span class="rr-lbl">R:R ratio</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-family:var(--mono);font-size:10px;color:var(--text3)">drag to explore →</span>
+            <span class="rr-lbl" id="rrSliderVal" style="color:var(--gold);font-weight:700">1.5:1</span>
+          </div>
         </div>
-        <div class="rr-track">
-          <div class="rr-fill" id="rrFill" style="width:0%"></div>
-          <div class="rr-min-line"></div>
-          <div class="rr-min-label">1.5 min</div>
+        <!-- slider -->
+        <input type="range" id="rrSlider" min="0.5" max="4.0" step="0.1" value="1.5"
+          oninput="document.getElementById('rrSliderVal').textContent=parseFloat(this.value).toFixed(1)+':1';calc()"
+          style="width:100%;margin-bottom:10px;accent-color:var(--gold)">
+        <!-- gauge track -->
+        <div class="rr-track" style="position:relative;overflow:visible">
+          <div class="rr-fill" id="rrFill" style="width:0%">
+            <div id="rrFillDot" style="position:absolute;right:-5px;top:-3px;width:10px;height:10px;border-radius:50%;background:var(--gold)"></div>
+          </div>
+          <!-- recommended marker -->
+          <div id="rrRecMarker" style="position:absolute;top:-5px;width:2px;height:14px;background:var(--text2);transform:translateX(-50%)"></div>
+          <div id="rrRecLabel" style="position:absolute;top:12px;font-family:var(--mono);font-size:9px;color:var(--text2);transform:translateX(-50%);white-space:nowrap"></div>
+        </div>
+        <!-- scale labels -->
+        <div style="display:flex;justify-content:space-between;margin-top:22px;padding:0 1px">
+          <span style="font-family:var(--mono);font-size:9px;color:var(--text3)">0.5</span>
+          <span style="font-family:var(--mono);font-size:9px;color:var(--text3)">1.0</span>
+          <span style="font-family:var(--mono);font-size:9px;color:var(--text3)">2.0</span>
+          <span style="font-family:var(--mono);font-size:9px;color:var(--text3)">3.0</span>
+          <span style="font-family:var(--mono);font-size:9px;color:var(--text3)">4.0</span>
+        </div>
+        <!-- recommended note -->
+        <div id="rrRecNote" style="margin-top:8px;font-family:var(--mono);font-size:10px;color:var(--text2);line-height:1.6;border-left:2px solid var(--border2);padding-left:8px"></div>
+        <div style="display:flex;justify-content:space-between;margin-top:8px">
+          <span class="rr-lbl" id="rrVal">—</span>
+          <span style="font-family:var(--mono);font-size:10px;color:var(--text3)" id="rrAboveRec"></span>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- PANEL 04: Checklist -->
+  <!-- 04: Checklist -->
   <div class="panel">
     <div class="panel-head">
       <span class="panel-title">04 · Pre-Trade Checklist</span>
-      <span class="panel-tag" id="checkCount">0/6</span>
+      <span class="ptag" id="checkCount">0/6</span>
     </div>
     <div class="panel-body">
-      <div class="checklist" id="checklist">
-        <div class="check-item" onclick="toggleCheck(this)">
-          <div class="check-box"><svg class="check-tick" viewBox="0 0 8 6"><path d="M1 3L3 5L7 1"/></svg></div>
-          <span class="check-text">HTF bias set — H1/H4 checked on MT5</span>
+      <div class="checklist">
+        <div class="chk" onclick="toggleCheck(this)">
+          <div class="chk-box"><svg class="chk-tick" viewBox="0 0 8 6"><path d="M1 3L3 5L7 1"/></svg></div>
+          <span class="chk-text">HTF bias checked on H1/H4 in MT5</span>
         </div>
-        <div class="check-item" onclick="toggleCheck(this)">
-          <div class="check-box"><svg class="check-tick" viewBox="0 0 8 6"><path d="M1 3L3 5L7 1"/></svg></div>
-          <span class="check-text">Box high & low clearly marked on chart</span>
+        <div class="chk" onclick="toggleCheck(this)">
+          <div class="chk-box"><svg class="chk-tick" viewBox="0 0 8 6"><path d="M1 3L3 5L7 1"/></svg></div>
+          <span class="chk-text">Box high &amp; low marked on chart</span>
         </div>
-        <div class="check-item" onclick="toggleCheck(this)">
-          <div class="check-box"><svg class="check-tick" viewBox="0 0 8 6"><path d="M1 3L3 5L7 1"/></svg></div>
-          <span class="check-text">Spread checked — not widening on broker</span>
+        <div class="chk" onclick="toggleCheck(this)">
+          <div class="chk-box"><svg class="chk-tick" viewBox="0 0 8 6"><path d="M1 3L3 5L7 1"/></svg></div>
+          <span class="chk-text">Spread checked — not widening</span>
         </div>
-        <div class="check-item" onclick="toggleCheck(this)">
-          <div class="check-box"><svg class="check-tick" viewBox="0 0 8 6"><path d="M1 3L3 5L7 1"/></svg></div>
-          <span class="check-text">No major news in next 30 min (NFP/CPI/Fed)</span>
+        <div class="chk" onclick="toggleCheck(this)">
+          <div class="chk-box"><svg class="chk-tick" viewBox="0 0 8 6"><path d="M1 3L3 5L7 1"/></svg></div>
+          <span class="chk-text">No major news in next 30 min</span>
         </div>
-        <div class="check-item" onclick="toggleCheck(this)">
-          <div class="check-box"><svg class="check-tick" viewBox="0 0 8 6"><path d="M1 3L3 5L7 1"/></svg></div>
-          <span class="check-text">London or NY session active</span>
+        <div class="chk" onclick="toggleCheck(this)">
+          <div class="chk-box"><svg class="chk-tick" viewBox="0 0 8 6"><path d="M1 3L3 5L7 1"/></svg></div>
+          <span class="chk-text">London or NY session active</span>
         </div>
-        <div class="check-item" onclick="toggleCheck(this)">
-          <div class="check-box"><svg class="check-tick" viewBox="0 0 8 6"><path d="M1 3L3 5L7 1"/></svg></div>
-          <span class="check-text">SL placed beyond spread + buffer confirmed</span>
+        <div class="chk" onclick="toggleCheck(this)">
+          <div class="chk-box"><svg class="chk-tick" viewBox="0 0 8 6"><path d="M1 3L3 5L7 1"/></svg></div>
+          <span class="chk-text">SL placed beyond spread + buffer</span>
         </div>
       </div>
       <button class="trade-btn" id="tradeBtn" disabled>COMPLETE CHECKLIST TO UNLOCK</button>
     </div>
   </div>
 
-  <!-- PANEL 05: Notes -->
+  <!-- 05: Notes -->
   <div class="panel">
     <div class="panel-head"><span class="panel-title">05 · Trade Notes</span></div>
     <div class="panel-body">
-      <textarea class="notes-box" placeholder="e.g. Asian box 3315–3320. London break up with big bull. Entered long 3320.25. SL 3314.50. Watching TP1 at 3324.50..."></textarea>
+      <textarea class="notes-box" placeholder="e.g. Asian box 3315–3320. London open big bull. Long at 3320.25, SL 3314.50, TP1 3324.50..."></textarea>
     </div>
   </div>
 
-</div><!-- end col2 -->
+</div><!-- col2 -->
 
-<!-- ══ COL 3: SIDE ══ -->
+<!-- ══ COL 3: SIDEBAR ══ -->
 <div class="col">
 
   <div class="panel">
     <div class="panel-head"><span class="panel-title">MTF Bias</span></div>
-    <div class="panel-body" style="padding:8px 14px">
-      <div class="mtf-bars">
-        <div class="mtf-row">
-          <span class="mtf-tf">H4</span>
-          <select class="mtf-select" onchange="setMTF('h4',this.value)"><option value="n">Neutral</option><option value="b">Bullish</option><option value="d">Bearish</option></select>
-          <div class="mtf-dot" id="dot-h4"></div>
-        </div>
-        <div class="mtf-row">
-          <span class="mtf-tf">H1</span>
-          <select class="mtf-select" onchange="setMTF('h1',this.value)"><option value="n">Neutral</option><option value="b">Bullish</option><option value="d">Bearish</option></select>
-          <div class="mtf-dot" id="dot-h1"></div>
-        </div>
-        <div class="mtf-row">
-          <span class="mtf-tf">M15</span>
-          <select class="mtf-select" onchange="setMTF('m15',this.value)"><option value="n">Neutral</option><option value="b">Bullish</option><option value="d">Bearish</option></select>
-          <div class="mtf-dot" id="dot-m15"></div>
-        </div>
-        <div class="mtf-row">
-          <span class="mtf-tf">M5</span>
-          <select class="mtf-select" onchange="setMTF('m5',this.value)"><option value="n">Neutral</option><option value="b">Bullish</option><option value="d">Bearish</option></select>
-          <div class="mtf-dot" id="dot-m5"></div>
-        </div>
-        <div class="mtf-row">
-          <span class="mtf-tf">M1</span>
-          <select class="mtf-select" onchange="setMTF('m1',this.value)"><option value="n">Neutral</option><option value="b">Bullish</option><option value="d">Bearish</option></select>
-          <div class="mtf-dot" id="dot-m1"></div>
-        </div>
+    <div class="panel-body" style="padding:7px 13px">
+      <div class="mtf-list">
+        <div class="mtf-row"><span class="mtf-tf">H4</span><select class="mtf-sel" onchange="setMTF('h4',this.value)"><option value="n">Neutral</option><option value="b">Bullish</option><option value="d">Bearish</option></select><div class="mtf-dot" id="dot-h4"></div></div>
+        <div class="mtf-row"><span class="mtf-tf">H1</span><select class="mtf-sel" onchange="setMTF('h1',this.value)"><option value="n">Neutral</option><option value="b">Bullish</option><option value="d">Bearish</option></select><div class="mtf-dot" id="dot-h1"></div></div>
+        <div class="mtf-row"><span class="mtf-tf">M15</span><select class="mtf-sel" onchange="setMTF('m15',this.value)"><option value="n">Neutral</option><option value="b">Bullish</option><option value="d">Bearish</option></select><div class="mtf-dot" id="dot-m15"></div></div>
+        <div class="mtf-row"><span class="mtf-tf">M5</span><select class="mtf-sel" onchange="setMTF('m5',this.value)"><option value="n">Neutral</option><option value="b">Bullish</option><option value="d">Bearish</option></select><div class="mtf-dot" id="dot-m5"></div></div>
+        <div class="mtf-row"><span class="mtf-tf">M1</span><select class="mtf-sel" onchange="setMTF('m1',this.value)"><option value="n">Neutral</option><option value="b">Bullish</option><option value="d">Bearish</option></select><div class="mtf-dot" id="dot-m1"></div></div>
       </div>
       <div class="mtf-score">
-        <div class="mtf-score-label">Overall bias</div>
-        <div class="mtf-score-val" id="mtfScoreVal">—</div>
-        <div class="mtf-advice" id="mtfAdvice">Set timeframe biases above</div>
+        <div class="mtf-score-lbl">Overall bias</div>
+        <div class="mtf-score-val" id="mtfVal">—</div>
+        <div class="mtf-advice" id="mtfAdv">Set timeframe biases above</div>
       </div>
     </div>
   </div>
 
   <div class="panel">
     <div class="panel-head"><span class="panel-title">Sessions (UTC)</span></div>
-    <div class="panel-body" style="padding:10px 14px">
-      <div class="session-card" id="sess-asia"><div class="session-name">Asia</div><div class="session-times">00:00 – 08:00 UTC</div></div>
-      <div class="session-card" id="sess-london"><div class="session-name">London open</div><div class="session-times">08:00 – 10:00 UTC · Best</div></div>
-      <div class="session-card" id="sess-ny"><div class="session-name">NY open</div><div class="session-times">13:30 – 15:00 UTC · Best</div></div>
+    <div class="panel-body" style="padding:9px 13px">
+      <div class="sess-card" id="sess-asia"><div class="sess-name">Asia</div><div class="sess-time">00:00 – 08:00 UTC</div></div>
+      <div class="sess-card" id="sess-london"><div class="sess-name">London open</div><div class="sess-time">08:00 – 10:00 UTC · Best</div></div>
+      <div class="sess-card" id="sess-ny"><div class="sess-name">NY open</div><div class="sess-time">13:30 – 15:00 UTC · Best</div></div>
     </div>
   </div>
 
   <div class="panel">
     <div class="panel-head"><span class="panel-title">MT5 Tips</span></div>
     <div class="panel-body">
-      <div class="tip-item">Tick volume = bar activity, not real size. Use candle shape instead.</div>
-      <div class="tip-item">Min lot on MT5 = 0.01. Some brokers allow 0.001 micro lots.</div>
-      <div class="tip-item">Spread widens during news & thin sessions. Always check before entry.</div>
-      <div class="tip-item">With $20 at 1:1000 → risk 1% = $0.20 max. Stay disciplined.</div>
+      <div class="tip">Tick volume = bar activity, not real size. Use candle shape instead.</div>
+      <div class="tip">Min lot on MT5 = 0.01. Some brokers allow 0.001 micro.</div>
+      <div class="tip">Spread widens during news. Check before every entry.</div>
+      <div class="tip">$20 at 1:1000 → 1% risk = $0.20 per trade. Stay disciplined.</div>
     </div>
   </div>
 
-</div><!-- end col3 -->
-</div><!-- end grid -->
-</div><!-- end container -->
+</div><!-- col3 -->
+</div><!-- grid -->
+</div><!-- container -->
 
 <script>
-// ── STATE ──
-let currentMode = 'breakout';
-let dir = 'long';
-const mtfState = {h4:'n',h1:'n',m15:'n',m5:'n',m1:'n'};
+// ── GLOBAL STATE ──
+var currentMode = 'breakout';
+var tradeDir = 'long';
+var mtfState = {h4:'n', h1:'n', m15:'n', m5:'n', m1:'n'};
 
-// ── CLOCK + SESSION ──
-function updateClock(){
-  const now=new Date();
-  const h=String(now.getUTCHours()).padStart(2,'0');
-  const m=String(now.getUTCMinutes()).padStart(2,'0');
-  const s=String(now.getUTCSeconds()).padStart(2,'0');
-  document.getElementById('clockEl').textContent=h+':'+m+':'+s+' UTC';
-  const t=now.getUTCHours()*60+now.getUTCMinutes();
-  const badge=document.getElementById('sessionBadge');
-  document.querySelectorAll('.session-card .session-name').forEach(n=>n.className='session-name');
-  let sessName='',active=false;
-  if(t>=480&&t<600){sessName='LONDON OPEN · ACTIVE';active=true;document.getElementById('sess-london').querySelector('.session-name').className='session-name active';}
-  else if(t>=810&&t<900){sessName='NY OPEN · ACTIVE';active=true;document.getElementById('sess-ny').querySelector('.session-name').className='session-name active';}
-  else if(t>=600&&t<810){sessName='LONDON SESSION';}
-  else if(t>=900&&t<1200){sessName='NY SESSION';}
-  else{sessName='ASIA / OFF-PEAK';document.getElementById('sess-asia').querySelector('.session-name').className='session-name active';}
-  badge.textContent=sessName;
-  badge.className=active?'active':'';
+// ── CLOCK & SESSION ──
+function updateClock() {
+  var now = new Date();
+  var h = String(now.getUTCHours()).padStart(2,'0');
+  var m = String(now.getUTCMinutes()).padStart(2,'0');
+  var s = String(now.getUTCSeconds()).padStart(2,'0');
+  document.getElementById('clockEl').textContent = h+':'+m+':'+s+' UTC';
+
+  var t = now.getUTCHours()*60 + now.getUTCMinutes();
+  var badge = document.getElementById('sessionBadge');
+  document.querySelectorAll('.sess-name').forEach(function(n){ n.className='sess-name'; });
+
+  var sessName='', active=false;
+  if(t>=480 && t<600){ sessName='LONDON OPEN · ACTIVE'; active=true; document.getElementById('sess-london').querySelector('.sess-name').className='sess-name active'; }
+  else if(t>=810 && t<900){ sessName='NY OPEN · ACTIVE'; active=true; document.getElementById('sess-ny').querySelector('.sess-name').className='sess-name active'; }
+  else if(t>=600 && t<810){ sessName='LONDON SESSION'; }
+  else if(t>=900 && t<1200){ sessName='NY SESSION'; }
+  else { sessName='ASIA / OFF-PEAK'; document.getElementById('sess-asia').querySelector('.sess-name').className='sess-name active'; }
+  badge.textContent = sessName;
+  badge.className = active ? 'active' : '';
 }
-setInterval(updateClock,1000);
+setInterval(updateClock, 1000);
 updateClock();
 
 // ── MTF ──
-function setMTF(tf,val){
-  mtfState[tf]=val;
-  const dot=document.getElementById('dot-'+tf);
-  dot.className='mtf-dot '+(val==='b'?'bull':val==='d'?'bear':'');
+function setMTF(tf, val) {
+  mtfState[tf] = val;
+  var dot = document.getElementById('dot-'+tf);
+  dot.className = 'mtf-dot' + (val==='b' ? ' bull' : val==='d' ? ' bear' : '');
   scoreMTF();
 }
-function scoreMTF(){
-  const vals=Object.values(mtfState);
-  const bulls=vals.filter(v=>v==='b').length;
-  const bears=vals.filter(v=>v==='d').length;
-  const sv=document.getElementById('mtfScoreVal');
-  const sa=document.getElementById('mtfAdvice');
-  if(bulls>=4){sv.textContent='Strong Bullish';sv.style.color='var(--green)';sa.textContent='Prefer long entries. Avoid short reversals.';}
-  else if(bears>=4){sv.textContent='Strong Bearish';sv.style.color='var(--red)';sa.textContent='Prefer short entries. Avoid long reversals.';}
-  else if(bulls>=3){sv.textContent='Mild Bullish';sv.style.color='var(--green)';sa.textContent='Lean long. Short reversals lower quality.';}
-  else if(bears>=3){sv.textContent='Mild Bearish';sv.style.color='var(--red)';sa.textContent='Lean short. Long reversals lower quality.';}
-  else{sv.textContent='Mixed / Neutral';sv.style.color='var(--text2)';sa.textContent='Trade reversals inside box or wait for clarity.';}
+function scoreMTF() {
+  var vals = Object.values(mtfState);
+  var bulls = vals.filter(function(v){ return v==='b'; }).length;
+  var bears = vals.filter(function(v){ return v==='d'; }).length;
+  var sv = document.getElementById('mtfVal');
+  var sa = document.getElementById('mtfAdv');
+  if(bulls>=4){ sv.textContent='Strong Bullish'; sv.style.color='var(--green)'; sa.textContent='Prefer long entries. Avoid short reversals.'; }
+  else if(bears>=4){ sv.textContent='Strong Bearish'; sv.style.color='var(--red)'; sa.textContent='Prefer short entries. Avoid long reversals.'; }
+  else if(bulls>=3){ sv.textContent='Mild Bullish'; sv.style.color='var(--green)'; sa.textContent='Lean long. Short reversals lower quality.'; }
+  else if(bears>=3){ sv.textContent='Mild Bearish'; sv.style.color='var(--red)'; sa.textContent='Lean short. Long reversals lower quality.'; }
+  else { sv.textContent='Mixed / Neutral'; sv.style.color='var(--text2)'; sa.textContent='Trade reversals inside box or wait for clarity.'; }
 }
 
 // ── CANDLE VISUALISATION ──
-// The stage div is ~240px tall. Box occupies a fixed pixel band within it.
-// SVG viewBox matches stage height so coordinates are 1:1 with CSS px.
-// BOX_TOP_PX and BOX_BOT_PX are y-pixel positions in the stage (top of stage = y=0).
-// In SVG, y increases downward — so box top is a SMALLER y value than box bottom.
-// "At box top" means the candle body sits near BOX_TOP_PX (small y = high on screen).
-// "At box bottom" means the candle body sits near BOX_BOT_PX (large y = low on screen).
+var SVG_H=260, BOX_TOP=80, BOX_BOT=190;
+var BOX_MID = (BOX_TOP+BOX_BOT)/2;
 
-const SVG_H=240, BOX_TOP_PX=70, BOX_BOT_PX=180;
-const BOX_MID=(BOX_TOP_PX+BOX_BOT_PX)/2; // 125
-const BOX_H=BOX_BOT_PX-BOX_TOP_PX;       // 110
+function drawCandle(body, pos) {
+  var svg = document.getElementById('cvSVG');
+  svg.setAttribute('viewBox','0 0 52 '+SVG_H);
+  svg.setAttribute('height', SVG_H);
 
-function drawCandle(body,pos){
-  const svg=document.getElementById('candleSVG');
-  const cx=24;
+  // box overlay
+  document.getElementById('cvBoxZone').style.top = BOX_TOP+'px';
+  document.getElementById('cvBoxZone').style.height = (BOX_BOT-BOX_TOP)+'px';
+  document.getElementById('cvLineHi').style.top = BOX_TOP+'px';
+  document.getElementById('cvLineLo').style.top = BOX_BOT+'px';
+  document.getElementById('cvLblHi').style.top = (BOX_TOP-13)+'px';
+  document.getElementById('cvLblLo').style.top = (BOX_BOT+3)+'px';
 
-  // Set svg dimensions to match stage
-  svg.setAttribute('viewBox','0 0 48 '+SVG_H);
-  svg.setAttribute('height',SVG_H);
+  // arrow
+  var arrow = document.getElementById('cvArrow');
+  arrow.style.opacity = '0';
 
-  // Position box zone overlay elements (these are CSS-positioned inside the stage div)
-  document.getElementById('boxZone').style.top=BOX_TOP_PX+'px';
-  document.getElementById('boxZone').style.height=BOX_H+'px';
-  document.getElementById('boxLineHi').style.top=BOX_TOP_PX+'px';
-  document.getElementById('boxLineLo').style.top=BOX_BOT_PX+'px';
-  document.getElementById('boxLabelHi').style.top=(BOX_TOP_PX-14)+'px';
-  document.getElementById('boxLabelLo').style.top=(BOX_BOT_PX+2)+'px';
+  // candle shape offsets from anchor
+  var col, bUp, bDn, wUp, wDn, pUp, pDn;
+  if(body==='big_bull'){       col='#22c55e'; bUp=-30; bDn=30; wUp=-42; wDn=38; }
+  else if(body==='big_bear'){  col='#ef4444'; bUp=-30; bDn=30; wUp=-38; wDn=42; }
+  else if(body==='small'){     col='#8b8fa8'; bUp=-6;  bDn=6;  wUp=-24; wDn=24; }
+  else if(body==='pin_bull'){  col='#22c55e'; bUp=-4;  bDn=6;  wUp=-12; wDn=42; }
+  else if(body==='pin_bear'){  col='#ef4444'; bUp=-6;  bDn=4;  wUp=-42; wDn=12; }
+  else if(body==='engulf_bull'){ col='#22c55e'; bUp=-28; bDn=28; wUp=-36; wDn=34; pUp=-10; pDn=15; }
+  else if(body==='engulf_bear'){ col='#ef4444'; bUp=-28; bDn=28; wUp=-34; wDn=36; pUp=-15; pDn=10; }
 
-  // Break arrow
-  const arrow=document.getElementById('breakArrow');
-  arrow.style.opacity='0';
-
-  // ── Define candle shape relative to an anchor point ──
-  // anchor = where the candle's centre/body will be placed vertically.
-  // All measurements are offsets FROM the anchor (in SVG px, positive = downward).
-  let col, bUp, bDn, wUp, wDn, prevBUp, prevBDn;
-  // bUp = body top offset from anchor (negative = above anchor)
-  // bDn = body bottom offset from anchor (positive = below anchor)
-
-  if(body==='big_bull'){
-    col='#22c55e'; bUp=-28; bDn=28; wUp=-40; wDn=36;
-  } else if(body==='big_bear'){
-    col='#ef4444'; bUp=-28; bDn=28; wUp=-36; wDn=40;
-  } else if(body==='small'){
-    col='#8b8fa8'; bUp=-6; bDn=6; wUp=-22; wDn=22;
-  } else if(body==='pin_bull'){
-    // small body at top, long lower wick
-    col='#22c55e'; bUp=-4; bDn=6; wUp=-10; wDn=38;
-  } else if(body==='pin_bear'){
-    // small body at bottom, long upper wick
-    col='#ef4444'; bUp=-6; bDn=4; wUp=-38; wDn=10;
-  } else if(body==='engulf_bull'){
-    col='#22c55e'; bUp=-26; bDn=26; wUp=-34; wDn=32;
-    prevBUp=-10; prevBDn=14;
-  } else if(body==='engulf_bear'){
-    col='#ef4444'; bUp=-26; bDn=26; wUp=-32; wDn=34;
-    prevBUp=-14; prevBDn=10;
+  // anchor position
+  var anchor;
+  if(pos==='top'){        anchor = BOX_TOP + 18; }
+  else if(pos==='bottom'){ anchor = BOX_BOT - 18; }
+  else if(pos==='mid'){    anchor = BOX_MID; }
+  else if(pos==='break_up'){
+    anchor = BOX_TOP - 24;
+    arrow.textContent = '↑'; arrow.style.top=(BOX_TOP-50)+'px'; arrow.style.color='var(--green)'; arrow.style.opacity='1';
+  }
+  else if(pos==='break_down'){
+    anchor = BOX_BOT + 24;
+    arrow.textContent = '↓'; arrow.style.top=(BOX_BOT+16)+'px'; arrow.style.color='var(--red)'; arrow.style.opacity='1';
   }
 
-  // ── Determine anchor Y based on position in box ──
-  // "top" = candle body near BOX_TOP_PX → anchor close to BOX_TOP_PX
-  // "bottom" = candle body near BOX_BOT_PX → anchor close to BOX_BOT_PX
-  // "break_up" = candle body ABOVE BOX_TOP_PX → anchor above box
-  // "break_down" = candle body BELOW BOX_BOT_PX → anchor below box
-  let anchor;
-  if(pos==='top'){
-    anchor=BOX_TOP_PX+16; // body sits just inside the top of the box
-  } else if(pos==='bottom'){
-    anchor=BOX_BOT_PX-16; // body sits just inside the bottom of the box
-  } else if(pos==='mid'){
-    anchor=BOX_MID;
-  } else if(pos==='break_up'){
-    anchor=BOX_TOP_PX-20; // body above the box
-    arrow.textContent='↑';
-    arrow.style.top=(BOX_TOP_PX-50)+'px';
-    arrow.style.color='var(--green)';
-    arrow.style.opacity='1';
-  } else if(pos==='break_down'){
-    anchor=BOX_BOT_PX+20; // body below the box
-    arrow.textContent='↓';
-    arrow.style.top=(BOX_BOT_PX+14)+'px';
-    arrow.style.color='var(--red)';
-    arrow.style.opacity='1';
+  var cx = 26;
+  var clampW = function(v){ return Math.max(4, Math.min(SVG_H-4, v)); };
+  var parts = '';
+
+  // prev candle for engulf
+  if(pUp !== undefined){
+    var pCol = col==='#22c55e' ? '#ef4444' : '#22c55e';
+    var pt = anchor+pUp, pb = anchor+pDn;
+    parts += '<line x1="'+(cx-13)+'" y1="'+clampW(pt-10)+'" x2="'+(cx-13)+'" y2="'+clampW(pb+10)+'" stroke="#4a4e63" stroke-width="1.5"/>';
+    parts += '<rect x="'+(cx-20)+'" y="'+pt+'" width="12" height="'+Math.max(pb-pt,3)+'" fill="'+pCol+'" rx="1" opacity="0.65"/>';
   }
 
-  // ── Resolve absolute SVG y coordinates ──
-  const bodyTopY  = anchor + bUp;
-  const bodyBotY  = anchor + bDn;
-  const wickTopY  = anchor + wUp;
-  const wickBotY  = anchor + wDn;
+  // wick
+  parts += '<line x1="'+cx+'" y1="'+clampW(anchor+wUp)+'" x2="'+cx+'" y2="'+clampW(anchor+wDn)+'" stroke="#6b7280" stroke-width="1.5"/>';
+  // body (not clamped — preserves full size)
+  parts += '<rect x="'+(cx-9)+'" y="'+(anchor+bUp)+'" width="18" height="'+Math.max(-bUp+bDn,3)+'" fill="'+col+'" rx="1"/>';
 
-  // clamp wick only (body must not be clamped or it shrinks)
-  const clampW=(v)=>Math.max(4,Math.min(SVG_H-4,v));
-
-  let svgContent='';
-
-  // Previous candle for engulfing patterns
-  if(prevBUp!==undefined){
-    const pCol=col==='#22c55e'?'#ef4444':'#22c55e';
-    const pTop=anchor+prevBUp, pBot=anchor+prevBDn;
-    svgContent+=`<line x1="${cx-12}" y1="${clampW(pTop-10)}" x2="${cx-12}" y2="${clampW(pBot+10)}" stroke="#4a4e63" stroke-width="1.5"/>`;
-    svgContent+=`<rect x="${cx-18}" y="${pTop}" width="12" height="${Math.max(pBot-pTop,3)}" fill="${pCol}" rx="1" opacity="0.7"/>`;
-  }
-
-  // Main wick (clamped)
-  svgContent+=`<line x1="${cx}" y1="${clampW(wickTopY)}" x2="${cx}" y2="${clampW(wickBotY)}" stroke="#6b7280" stroke-width="1.5"/>`;
-
-  // Main body (never clamped — preserves size)
-  svgContent+=`<rect x="${cx-8}" y="${bodyTopY}" width="16" height="${Math.max(bodyBotY-bodyTopY,3)}" fill="${col}" rx="1"/>`;
-
-  svg.innerHTML=svgContent;
+  svg.innerHTML = parts;
 }
 
 // ── CANDLE READER ──
-function readCandle(){
-  const body=document.getElementById('cBody').value;
-  const pos=document.getElementById('cPos').value;
-  const desc=document.getElementById('modeDesc');
-  let suggest=null,txt='',sigQ=[];
+function readCandle() {
+  var body = document.getElementById('cBody').value;
+  var pos  = document.getElementById('cPos').value;
 
-  // direction inference
-  if(body==='big_bull'||body==='pin_bull'||body==='engulf_bull') dir='long';
-  else if(body==='big_bear'||body==='pin_bear'||body==='engulf_bear') dir='short';
-  // keep prev dir for small/indecision
+  // infer direction
+  if(body==='big_bull'||body==='pin_bull'||body==='engulf_bull') tradeDir='long';
+  else if(body==='big_bear'||body==='pin_bear'||body==='engulf_bear') tradeDir='short';
 
-  // signal quality helpers
-  const strong=(body==='big_bull'||body==='big_bear'||body==='engulf_bull'||body==='engulf_bear');
-  const pin=(body==='pin_bull'||body==='pin_bear');
-  const indecision=body==='small';
-  const atEdge=(pos==='top'||pos==='bottom');
-  const breaking=(pos==='break_up'||pos==='break_down');
+  var strong  = (body==='big_bull'||body==='big_bear'||body==='engulf_bull'||body==='engulf_bear');
+  var pin     = (body==='pin_bull'||body==='pin_bear');
+  var indecis = (body==='small');
+  var atEdge  = (pos==='top'||pos==='bottom');
+  var breaking= (pos==='break_up'||pos==='break_down');
 
-  // signal 1: body strength
-  let s1c='',s1t='';
-  if(strong){s1c='go';s1t='Strong body — high momentum';}
-  else if(pin){s1c='go';s1t='Pin bar — clean rejection';}
-  else{s1c='warn';s1t='Small body — low conviction';}
+  // badge + text using textContent only
+  var badge = document.getElementById('sugBadge');
+  var text  = document.getElementById('sugText');
+  var suggest = null;
 
-  // signal 2: position quality
-  let s2c='',s2t='';
-  if(breaking){s2c='go';s2t='At box boundary — valid trigger';}
-  else if(atEdge){s2c='go';s2t='At box edge — good position';}
-  else{s2c='warn';s2t='Mid-box — wait for edge';}
+  // signal classes
+  var s1='warn', s2='warn', s3='warn';
+  var s1t='', s2t='', s3t='';
 
-  // logic matrix → mode suggestion
-  if(pos==='break_up'&&(body==='big_bull'||body==='engulf_bull')){
-    suggest='breakout';dir='long';
-    txt='<span class="tag green">BREAKOUT LONG</span> — Strong bullish close above box. Enter on this candle close or next bar open.';
-    sigQ=[s1c,s2c,'go'];
-  } else if(pos==='break_down'&&(body==='big_bear'||body==='engulf_bear')){
-    suggest='breakout';dir='short';
-    txt='<span class="tag red">BREAKOUT SHORT</span> — Strong bearish close below box. Enter on close.';
-    sigQ=[s1c,s2c,'go'];
-  } else if(pos==='break_up'&&body==='small'){
-    suggest='retest';dir='long';
-    txt='<span class="tag">WAIT — RETEST</span> — Weak close above. Wait for pullback to box top, then long on retest.';
-    sigQ=[s1c,s2c,'warn'];
-  } else if(pos==='break_down'&&body==='small'){
-    suggest='retest';dir='short';
-    txt='<span class="tag">WAIT — RETEST</span> — Weak break below. Wait for retest of box bottom before shorting.';
-    sigQ=[s1c,s2c,'warn'];
-  } else if(pos==='break_up'&&(body==='big_bear'||body==='engulf_bear')){
-    suggest='reversal';dir='short';
-    txt='<span class="tag red">FALSE BREAK — SHORT</span> — Bearish candle closing back inside box. Short the false breakout.';
-    sigQ=['go','go','go'];
-  } else if(pos==='break_down'&&(body==='big_bull'||body==='engulf_bull')){
-    suggest='reversal';dir='long';
-    txt='<span class="tag green">FALSE BREAK — LONG</span> — Bullish candle closing back inside box. Long the false breakout.';
-    sigQ=['go','go','go'];
-  } else if(pos==='top'&&(body==='pin_bear'||body==='engulf_bear')){
-    suggest='reversal';dir='short';
-    txt='<span class="tag red">REVERSAL SHORT</span> — Rejection at box top. Short with SL above the wick.';
-    sigQ=[s1c,s2c,'go'];
-  } else if(pos==='bottom'&&(body==='pin_bull'||body==='engulf_bull')){
-    suggest='reversal';dir='long';
-    txt='<span class="tag green">REVERSAL LONG</span> — Rejection at box bottom. Long with SL below the wick.';
-    sigQ=[s1c,s2c,'go'];
-  } else if(pos==='top'&&(body==='big_bull')){
-    suggest='breakout';dir='long';
-    txt='<span class="tag">WATCH BREAKOUT</span> — Big bull pushing box top. Wait for confirmed close above high.';
-    sigQ=[s1c,s2c,'warn'];
-  } else if(pos==='bottom'&&(body==='big_bear')){
-    suggest='breakout';dir='short';
-    txt='<span class="tag">WATCH BREAKOUT</span> — Big bear pushing box bottom. Wait for confirmed close below low.';
-    sigQ=[s1c,s2c,'warn'];
-  } else if(indecision){
+  if(strong)       { s1='go';   s1t='Strong body — high momentum'; }
+  else if(pin)     { s1='go';   s1t='Pin bar — clean rejection'; }
+  else             { s1='warn'; s1t='Small body — low conviction'; }
+
+  if(breaking)     { s2='go';   s2t='At box boundary — valid trigger'; }
+  else if(atEdge)  { s2='go';   s2t='At box edge — good position'; }
+  else             { s2='warn'; s2t='Mid-box — wait for edge'; }
+
+  // logic matrix
+  if(pos==='break_up' && (body==='big_bull'||body==='engulf_bull')){
+    suggest='breakout'; tradeDir='long';
+    badge.textContent='BREAKOUT LONG'; badge.className='sug-badge green';
+    text.textContent='Strong bullish close above box. Enter on this candle close or next bar open.';
+    s3='go'; s3t='Setup confirmed — enter now';
+  } else if(pos==='break_down' && (body==='big_bear'||body==='engulf_bear')){
+    suggest='breakout'; tradeDir='short';
+    badge.textContent='BREAKOUT SHORT'; badge.className='sug-badge red';
+    text.textContent='Strong bearish close below box. Enter on this candle close.';
+    s3='go'; s3t='Setup confirmed — enter now';
+  } else if(pos==='break_up' && body==='small'){
+    suggest='retest'; tradeDir='long';
+    badge.textContent='WAIT — RETEST'; badge.className='sug-badge gold';
+    text.textContent='Weak close above box. Wait for pullback to box top, then enter long on retest.';
+    s3='warn'; s3t='Setup partial — wait for retest';
+  } else if(pos==='break_down' && body==='small'){
+    suggest='retest'; tradeDir='short';
+    badge.textContent='WAIT — RETEST'; badge.className='sug-badge gold';
+    text.textContent='Weak break below box. Wait for retest of box bottom before shorting.';
+    s3='warn'; s3t='Setup partial — wait for retest';
+  } else if(pos==='break_up' && (body==='big_bear'||body==='engulf_bear')){
+    suggest='reversal'; tradeDir='short';
+    badge.textContent='FALSE BREAK — SHORT'; badge.className='sug-badge red';
+    text.textContent='Bearish candle closing back inside box. Short the false breakout.';
+    s3='go'; s3t='High quality false break setup';
+  } else if(pos==='break_down' && (body==='big_bull'||body==='engulf_bull')){
+    suggest='reversal'; tradeDir='long';
+    badge.textContent='FALSE BREAK — LONG'; badge.className='sug-badge green';
+    text.textContent='Bullish candle closing back inside box. Long the false breakout.';
+    s3='go'; s3t='High quality false break setup';
+  } else if(pos==='top' && (body==='pin_bear'||body==='engulf_bear')){
+    suggest='reversal'; tradeDir='short';
+    badge.textContent='REVERSAL SHORT'; badge.className='sug-badge red';
+    text.textContent='Rejection at box top. Short with SL above the wick. Target box low.';
+    s3='go'; s3t='Clean reversal setup';
+  } else if(pos==='bottom' && (body==='pin_bull'||body==='engulf_bull')){
+    suggest='reversal'; tradeDir='long';
+    badge.textContent='REVERSAL LONG'; badge.className='sug-badge green';
+    text.textContent='Rejection at box bottom. Long with SL below the wick. Target box high.';
+    s3='go'; s3t='Clean reversal setup';
+  } else if(pos==='top' && body==='big_bull'){
+    suggest='breakout'; tradeDir='long';
+    badge.textContent='WATCH BREAKOUT'; badge.className='sug-badge gold';
+    text.textContent='Big bull pushing box top. Wait for a confirmed close above the high.';
+    s3='warn'; s3t='Partial — wait for close above';
+  } else if(pos==='bottom' && body==='big_bear'){
+    suggest='breakout'; tradeDir='short';
+    badge.textContent='WATCH BREAKOUT'; badge.className='sug-badge gold';
+    text.textContent='Big bear pushing box bottom. Wait for confirmed close below the low.';
+    s3='warn'; s3t='Partial — wait for close below';
+  } else if(indecis){
     suggest=null;
-    txt='<span class="tag gray">NO TRADE</span> — Indecision candle. Wait for a decisive candle at a box edge.';
-    sigQ=['warn','warn','stop'];
+    badge.textContent='NO TRADE'; badge.className='sug-badge gray';
+    text.textContent='Indecision candle. Wait for a decisive candle at a box edge before acting.';
+    s3='stop'; s3t='No valid setup — skip trade';
   } else {
     suggest=null;
-    txt='<span class="tag gray">WAIT</span> — Mixed signal. Need a cleaner candle at a box edge.';
-    sigQ=['warn','warn','warn'];
+    badge.textContent='WAIT'; badge.className='sug-badge gray';
+    text.textContent='Mixed signal. Need a cleaner candle at a box edge.';
+    s3='warn'; s3t='Unclear — need more confluence';
   }
-
-  desc.innerHTML=txt;
 
   // update signals
-  const sigLabels=['Body strength','Edge position','Setup quality'];
-  const sigTexts=[
-    strong?'Strong body — high momentum':pin?'Pin bar — clean rejection':'Small body — low conviction',
-    breaking?'At box boundary — valid':atEdge?'At box edge — valid':'Mid-box — wait for edge',
-    sigQ[2]==='go'?'Setup confirmed — ready':sigQ[2]==='warn'?'Setup partial — exercise caution':'No valid setup — skip trade'
-  ];
-  for(let i=1;i<=3;i++){
-    document.getElementById('sig'+i).className='signal-dot '+(sigQ[i-1]||'');
-    document.getElementById('sig'+i+'txt').textContent=sigTexts[i-1];
-  }
+  document.getElementById('sig1').className='sig-dot '+s1;
+  document.getElementById('sig2').className='sig-dot '+s2;
+  document.getElementById('sig3').className='sig-dot '+s3;
+  document.getElementById('sig1txt').textContent=s1t;
+  document.getElementById('sig2txt').textContent=s2t;
+  document.getElementById('sig3txt').textContent=s3t;
 
-  const dirTag=document.getElementById('dirTag');
-  dirTag.textContent=dir==='long'?'LONG':'SHORT';
-  dirTag.style.color=dir==='long'?'var(--green)':'var(--red)';
-  dirTag.style.borderColor=dir==='long'?'rgba(34,197,94,0.3)':'rgba(239,68,68,0.3)';
+  // dir tag
+  var dt = document.getElementById('dirTag');
+  dt.textContent = tradeDir==='long' ? 'LONG' : 'SHORT';
+  dt.className = 'ptag ' + (tradeDir==='long' ? 'bull' : 'bear');
 
-  // update stage label — clean position names, no "breaking" text
-  const posLabels={
-    top:'AT BOX TOP', bottom:'AT BOX BOTTOM', mid:'MID BOX',
-    break_up:'ABOVE BOX', break_down:'BELOW BOX'
-  };
-  document.getElementById('stageLabel').textContent=posLabels[pos]||pos;
-  const modeColors={breakout:'var(--gold)',retest:'var(--amber)',reversal:'var(--blue)',null:'var(--text3)'};
-  document.getElementById('stageMode').textContent=suggest?suggest.toUpperCase():'—';
-  document.getElementById('stageMode').style.color=suggest?modeColors[suggest]:'var(--text3)';
+  // stage labels
+  var posLabels = {top:'AT BOX TOP',bottom:'AT BOX BOTTOM',mid:'MID BOX',break_up:'ABOVE BOX',break_down:'BELOW BOX'};
+  document.getElementById('csLabel').textContent = posLabels[pos] || pos;
+  var modeColors = {breakout:'var(--gold)',retest:'var(--amber)',reversal:'var(--green)'};
+  document.getElementById('csMode').textContent = suggest ? suggest.toUpperCase() : '—';
+  document.getElementById('csMode').style.color = suggest ? modeColors[suggest] : 'var(--text3)';
 
-  // draw candle
-  drawCandle(body,pos);
+  // mode buttons
+  ['mBreak','mRetest','mRev'].forEach(function(id){ document.getElementById(id).className='mbtn'; });
+  var map = {breakout:'mBreak',retest:'mRetest',reversal:'mRev'};
+  if(suggest){ document.getElementById(map[suggest]).className='mbtn suggest'; setMode(suggest, true); }
 
-  // set mode buttons
-  ['mBreak','mRetest','mRev'].forEach(id=>document.getElementById(id).className='mode-btn');
-  const map={breakout:'mBreak',retest:'mRetest',reversal:'mRev'};
-  if(suggest){document.getElementById(map[suggest]).className='mode-btn suggest';setMode(suggest,true);}
+  drawCandle(body, pos);
   calc();
 }
 
-function setMode(m,fromCandle){
-  currentMode=m;
+function setMode(m, fromCandle) {
+  currentMode = m;
   if(!fromCandle){
-    ['mBreak','mRetest','mRev'].forEach(id=>document.getElementById(id).className='mode-btn');
-    const map={breakout:'mBreak',retest:'mRetest',reversal:'mRev'};
-    document.getElementById(map[m]).className='mode-btn active';
+    ['mBreak','mRetest','mRev'].forEach(function(id){ document.getElementById(id).className='mbtn'; });
+    var map = {breakout:'mBreak',retest:'mRetest',reversal:'mRev'};
+    document.getElementById(map[m]).className='mbtn active';
   }
-  document.getElementById('modeTag').textContent=m.toUpperCase();
+  document.getElementById('modeTag').textContent = m.toUpperCase();
+  // auto-set slider to recommended RR for this mode
+  var recRR = m==='breakout' ? 1.5 : m==='retest' ? 2.5 : 2.0;
+  document.getElementById('rrSlider').value = recRR;
+  document.getElementById('rrSliderVal').textContent = recRR.toFixed(1)+':1';
   calc();
 }
 
-// ── CALC ──
-function calc(){
-  const hi=parseFloat(document.getElementById('bHigh').value)||0;
-  const lo=parseFloat(document.getElementById('bLow').value)||0;
-  const sp=parseFloat(document.getElementById('spread').value)||25;
-  const acct=parseFloat(document.getElementById('acct').value)||20;
-  const riskPct=parseFloat(document.getElementById('riskPct').value)||1;
-  if(hi<=lo||!hi||!lo)return;
+// ── BOX CHANGE ──
+function onBoxChange() {
+  calc();
+}
 
-  const spPips=sp/10;
-  const rangePts=hi-lo;
-  const rangePips=rangePts*10;
-  const spreadPct=spPips/rangePips*100;
-  const riskDollar=acct*riskPct/100;
+// ── MAIN CALC ──
+//
+// XAUUSD: 1 point = $0.01 price move = $1 P&L per standard lot = $0.01 per 0.01 lot
+// P&L = points_moved * lot * 1.0
+//
+// SL LOGIC (per mode):
+//   Breakout long  → entry above box high, SL just below box low (full box range + buffer)
+//   Breakout short → entry below box low,  SL just above box high (full box range + buffer)
+//   Retest long    → entry back at box high (pullback), SL just below box high by buffer (~5-10 pts)
+//   Retest short   → entry back at box low (pullback),  SL just above box low by buffer
+//   Reversal long  → entry at box low, SL just below box low by buffer
+//   Reversal short → entry at box high, SL just above box high by buffer
+//
+function calc() {
+  var hi    = parseFloat(document.getElementById('bHigh').value)||0;
+  var lo    = parseFloat(document.getElementById('bLow').value)||0;
+  var sp    = parseFloat(document.getElementById('spread').value)||25;
+  var acct  = parseFloat(document.getElementById('acct').value)||20;
+  var rPct  = parseFloat(document.getElementById('riskPct').value)||1;
+  var entry = parseFloat(document.getElementById('entryPrice').value);
+  var lot   = parseFloat(document.getElementById('lotSize').value);
+  var rrMult= parseFloat(document.getElementById('rrSlider').value)||1.5;
 
-  document.getElementById('sRange').textContent=rangePts.toFixed(2);
-  document.getElementById('sRangePips').textContent=rangePips.toFixed(1);
-  document.getElementById('sSpread').textContent=spPips.toFixed(1)+'p ('+Math.round(spreadPct)+'%)';
-  document.getElementById('sRiskDollar').textContent='$'+riskDollar.toFixed(2);
-  document.getElementById('spreadWarn').style.display=spreadPct>30?'block':'none';
-  document.getElementById('sSpread').className='stat-val'+(spreadPct>30?' danger':spreadPct>20?' warn':'');
+  if(hi<=lo||!hi||!lo) return;
 
-  let entry,sl,slPips,mult;
-  if(currentMode==='breakout'){
-    entry=dir==='long'?hi+(spPips/10):lo-(spPips/10);
-    sl=dir==='long'?lo-(spPips/10):hi+(spPips/10);
-    slPips=Math.abs(entry-sl)*10; mult=1.5;
-  } else if(currentMode==='retest'){
-    entry=dir==='long'?hi:lo;
-    sl=dir==='long'?hi-(spPips/10)-0.5:lo+(spPips/10)+0.5;
-    slPips=Math.abs(entry-sl)*10+spPips; mult=2.5;
+  var spPts      = sp * 0.01;           // 25 pts → $0.25 price units
+  var rangePrice = hi - lo;             // e.g. 78 pts = $0.78
+  var rangePts   = Math.round(rangePrice / 0.01);
+  var riskDollar = acct * rPct / 100;
+  var buffer     = spPts + 0.20;        // spread + $0.20 buffer in price units
+
+  // ── Effective entry ──
+  var effectiveEntry;
+  if(!isNaN(entry) && entry > 0) {
+    effectiveEntry = entry;
   } else {
-    entry=dir==='long'?lo+(spPips/10):hi-(spPips/10);
-    sl=dir==='long'?lo-(spPips/10)-0.3:hi+(spPips/10)+0.3;
-    slPips=Math.abs(entry-sl)*10+spPips; mult=2.0;
+    if(currentMode==='breakout'){
+      effectiveEntry = tradeDir==='long' ? hi + spPts : lo - spPts;
+    } else if(currentMode==='retest'){
+      effectiveEntry = tradeDir==='long' ? hi : lo;
+    } else {
+      effectiveEntry = tradeDir==='long' ? lo + spPts : hi - spPts;
+    }
   }
 
-  // lot: risk$ / (slPips * $1 per pip per 0.01 lot for gold)
-  // For XAUUSD: 1 lot = 100oz, 1 pip = $1 per 0.01 lot
-  const lotRaw=riskDollar/(slPips*1.0);
-  const lot=Math.max(parseFloat(lotRaw.toFixed(2)),0.01); // min 0.01
+  // ── SL placement ──
+  var sl;
+  if(currentMode==='breakout'){
+    // Entry is outside the box — SL goes to the OPPOSITE wall
+    // Long broke above: SL below box low.  Short broke below: SL above box high.
+    sl = tradeDir==='long' ? lo - buffer : hi + buffer;
+  } else if(currentMode==='retest'){
+    // Entry is back at the broken wall after breakout.
+    // SL sits a small buffer BEYOND that same wall (not the far wall).
+    // Long retest at box high: SL just below box high
+    // Short retest at box low: SL just above box low
+    sl = tradeDir==='long' ? hi - buffer : lo + buffer;
+  } else {
+    // Reversal: entry at the wall, SL just beyond that wall
+    // Long reversal at box low: SL just below box low
+    // Short reversal at box high: SL just above box high
+    sl = tradeDir==='long' ? lo - buffer : hi + buffer;
+  }
 
-  const tp1=dir==='long'?entry+(slPips*1.5/10):entry-(slPips*1.5/10);
-  const tp2=dir==='long'?entry+(slPips*2.5/10):entry-(slPips*2.5/10);
+  var slPts    = Math.abs(effectiveEntry - sl);          // in price
+  var slPoints = Math.max(Math.round(slPts / 0.01), 1);  // in integer points, min 1
 
-  // profit = pips * lot * $10 per pip per lot for XAUUSD (1 pip = $10/lot)
-  const pipVal=lot*10; // $ per pip
-  const profitTP1Dollars=slPips*1.5*pipVal;
-  const profitTP2Dollars=slPips*2.5*pipVal;
-  const lossIfSL=slPips*pipVal;
+  // ── Suggested lot ──
+  var sugLotRaw = slPoints > 0 ? riskDollar / slPoints : 0.01;
+  var sugLot    = Math.max(parseFloat(sugLotRaw.toFixed(2)), 0.01);
+  var activeLot = (!isNaN(lot) && lot >= 0.01) ? lot : sugLot;
 
-  const rrPct=Math.min((mult/3.5)*100,100);
+  // ── TP from slider RR ──
+  // rrMult is the user-chosen R:R e.g. 1.5 means TP = entry ± slPts*1.5
+  var tp = tradeDir==='long'
+    ? effectiveEntry + slPts * rrMult
+    : effectiveEntry - slPts * rrMult;
 
-  document.getElementById('lEntry').textContent=entry.toFixed(2);
-  document.getElementById('lDir').textContent=dir==='long'?'▲ LONG':'▼ SHORT';
-  document.getElementById('lSL').textContent=sl.toFixed(2);
-  document.getElementById('lSLPips').textContent=slPips.toFixed(1)+' pips (incl. spread)';
-  document.getElementById('lTP1').textContent=tp1.toFixed(2);
-  document.getElementById('lTP1Pips').textContent=(slPips*1.5).toFixed(1)+' pips from entry';
-  document.getElementById('lTP2').textContent=tp2.toFixed(2);
-  document.getElementById('lTP2Pips').textContent=(slPips*2.5).toFixed(1)+' pips from entry';
-  document.getElementById('lRisk').textContent='$'+riskDollar.toFixed(2);
-  document.getElementById('lRiskPct').textContent=riskPct+'% of $'+acct;
-  document.getElementById('lLot').textContent=lot.toFixed(2)+' lots';
-  document.getElementById('lLotNote').textContent=lotRaw<0.01?'clamped to 0.01 min':'min 0.01 lots';
+  // Fixed TP2 always at 2.5R for reference
+  var tp2ref = tradeDir==='long'
+    ? effectiveEntry + slPts * 2.5
+    : effectiveEntry - slPts * 2.5;
 
-  document.getElementById('tp1profit').textContent='+$'+profitTP1Dollars.toFixed(2);
-  document.getElementById('tp2profit').textContent='+$'+profitTP2Dollars.toFixed(2);
-  document.getElementById('profitTP1').textContent='+$'+profitTP1Dollars.toFixed(2);
-  document.getElementById('profitTP2').textContent='+$'+profitTP2Dollars.toFixed(2);
-  document.getElementById('lossIfSL').textContent='-$'+lossIfSL.toFixed(2);
-  document.getElementById('acctAfterSL').textContent='$'+(acct-lossIfSL).toFixed(2);
-  document.getElementById('sMaxProfit').textContent='+$'+profitTP2Dollars.toFixed(2);
+  // ── P&L ──
+  var pointVal  = activeLot * 1.0;  // $ per point per lot
+  var profTP    = slPoints * rrMult * pointVal;
+  var profTP2   = slPoints * 2.5   * pointVal;
+  var lossIfSL  = slPoints * pointVal;
 
-  document.getElementById('rrFill').style.width=rrPct+'%';
-  document.getElementById('rrVal').textContent=mult+':1';
+  // ── Recommended RR per mode ──
+  var recRR = currentMode==='breakout' ? 1.5 : currentMode==='retest' ? 2.5 : 2.0;
+  var recRRNote = currentMode==='breakout'
+    ? 'Min 1.5R for breakouts — momentum fades fast'
+    : currentMode==='retest'
+    ? 'Target 2.5R+ for retests — cleaner entry, tighter SL'
+    : 'Target 2R for reversals — SL is tight, room to box opposite wall';
+
+  // ── Spread stats ──
+  var spreadPct = rangePts > 0 ? (sp / rangePts * 100) : 0;
+  document.getElementById('sRange').textContent      = rangePrice.toFixed(2);
+  document.getElementById('sRangePips').textContent  = rangePts + ' pts';
+  document.getElementById('sSpread').textContent     = sp + ' pts (' + Math.round(spreadPct) + '%)';
+  document.getElementById('sRiskDollar').textContent = '$' + riskDollar.toFixed(2);
+  document.getElementById('spreadWarn').style.display = spreadPct > 30 ? 'block' : 'none';
+  document.getElementById('sSpread').className = 'ssval' + (spreadPct>30?' danger':spreadPct>20?' warn':'');
+  var st = document.getElementById('spreadTag');
+  st.textContent = spreadPct > 30 ? 'SPREAD HIGH' : 'XAUUSD';
+  st.className   = 'ptag' + (spreadPct > 30 ? ' bear' : '');
+
+  // ── Update trade levels ──
+  document.getElementById('lEntry').textContent   = effectiveEntry.toFixed(2);
+  document.getElementById('lDir').textContent     = tradeDir==='long' ? '▲ LONG' : '▼ SHORT';
+  document.getElementById('lSL').textContent      = sl.toFixed(2);
+  document.getElementById('lSLPips').textContent  = slPoints + ' pts (spread + buffer)';
+  document.getElementById('lTP1').textContent     = tp.toFixed(2);
+  document.getElementById('lTP1Pips').textContent = Math.round(slPoints * rrMult) + ' pts from entry';
+  document.getElementById('tp1pill').textContent  = '+$' + profTP.toFixed(2);
+  document.getElementById('lTP2').textContent     = tp2ref.toFixed(2);
+  document.getElementById('lTP2Pips').textContent = Math.round(slPoints * 2.5) + ' pts (2.5R ref)';
+  document.getElementById('tp2pill').textContent  = '+$' + profTP2.toFixed(2);
+  document.getElementById('lSugLot').textContent  = sugLot.toFixed(2) + ' lots';
+  document.getElementById('lSugLotNote').textContent = sugLotRaw < 0.01
+    ? 'clamped to 0.01 min' : 'based on ' + rPct + '% risk / ' + slPoints + ' pt SL';
+  document.getElementById('lRR').textContent      = rrMult.toFixed(1) + ':1';
+  document.getElementById('lRRNote').textContent  = currentMode + ' mode';
+  document.getElementById('sMaxProfit').textContent = '+$' + profTP.toFixed(2);
+
+  // ── Profit summary ──
+  document.getElementById('psTP1').textContent  = '+$' + profTP.toFixed(2);
+  document.getElementById('psTP2').textContent  = '+$' + profTP2.toFixed(2);
+  document.getElementById('psSL').textContent   = '-$' + lossIfSL.toFixed(2);
+  document.getElementById('psAcct').textContent = '$' + (acct - lossIfSL).toFixed(2);
+
+  // ── RR gauge & recommended ──
+  var rrPct = Math.min((rrMult / 4.0) * 100, 100);
+  document.getElementById('rrFill').style.width = rrPct + '%';
+  document.getElementById('rrVal').textContent  = rrMult.toFixed(1) + ':1';
+
+  // recommended marker position
+  var recPct = Math.min((recRR / 4.0) * 100, 100);
+  document.getElementById('rrRecMarker').style.left = recPct + '%';
+  document.getElementById('rrRecLabel').textContent  = 'Rec ' + recRR + ':1';
+  document.getElementById('rrRecLabel').style.left   = recPct + '%';
+
+  // colour: below rec = amber, at/above = green
+  document.getElementById('rrFill').style.background = rrMult >= recRR ? 'var(--green)' : 'var(--amber)';
+  document.getElementById('rrFill').style.transition  = 'width .25s, background .25s';
+  var dot = document.getElementById('rrFillDot');
+  if(dot) dot.style.background = rrMult >= recRR ? 'var(--green)' : 'var(--amber)';
+
+  document.getElementById('rrRecNote').textContent = recRRNote;
+  document.getElementById('rrSliderVal').textContent = rrMult.toFixed(1) + ':1';
+
+  // ── Entry hint ──
+  var hint = document.getElementById('entrySuggest');
+  if(!isNaN(entry) && entry>0 && !isNaN(lot) && lot>=0.01){
+    hint.textContent = 'Entry ' + effectiveEntry.toFixed(2) + ', lot ' + activeLot.toFixed(2)
+      + '. SL: ' + slPoints + ' pts. Each point = $' + activeLot.toFixed(2) + '.';
+    hint.style.color='var(--green)';
+  } else if(!isNaN(entry) && entry>0){
+    hint.textContent = 'Entry set. Enter your lot size to complete the setup.';
+    hint.style.color='var(--amber)';
+  } else {
+    hint.textContent = 'Enter your actual entry price and lot size — TP & SL auto-calculate.';
+    hint.style.color='var(--text3)';
+  }
 }
 
 // ── CHECKLIST ──
 function toggleCheck(el){
   el.classList.toggle('done');
-  updateCheckCount();
-}
-function updateCheckCount(){
-  const all=document.querySelectorAll('.check-item');
-  const done=document.querySelectorAll('.check-item.done').length;
-  document.getElementById('checkCount').textContent=done+'/'+all.length;
-  const btn=document.getElementById('tradeBtn');
-  const ready=done===all.length;
-  btn.disabled=!ready;
-  btn.className=ready?'trade-btn ready':'trade-btn';
-  btn.textContent=ready?'▸ ALL CHECKS PASSED — TRADE READY':'COMPLETE CHECKLIST TO UNLOCK';
+  var all  = document.querySelectorAll('.chk').length;
+  var done = document.querySelectorAll('.chk.done').length;
+  document.getElementById('checkCount').textContent = done+'/'+all;
+  var btn = document.getElementById('tradeBtn');
+  var ready = done===all;
+  btn.disabled = !ready;
+  btn.className = ready ? 'trade-btn ready' : 'trade-btn';
+  btn.textContent = ready ? '▸ ALL CHECKS PASSED — TRADE READY' : 'COMPLETE CHECKLIST TO UNLOCK';
 }
 
 // ── INIT ──
 setMode('breakout');
 readCandle();
-calc();
-drawCandle('big_bull','top');
+onBoxChange();
 </script>
 </body>
 </html>
