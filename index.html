@@ -68,7 +68,7 @@ select{cursor:pointer}
 .candle-stage{
   flex:0 0 180px;background:var(--bg3);border:1px solid var(--border);border-radius:2px;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:10px 8px;position:relative;overflow:hidden;min-height:220px
+  padding:10px 8px;position:relative;overflow:hidden;min-height:270px
 }
 .box-zone{
   position:absolute;left:20px;right:20px;background:rgba(240,180,41,0.07);
@@ -292,7 +292,7 @@ hr{border:none;border-top:1px solid var(--border);margin:10px 0}
           <!-- break arrow -->
           <div class="break-arrow" id="breakArrow"></div>
           <!-- candle svg -->
-          <svg id="candleSVG" width="48" height="140" viewBox="0 0 48 140"></svg>
+          <svg id="candleSVG" width="48" height="240" viewBox="0 0 48 240"></svg>
           <div class="candle-stage-label" id="stageLabel">SELECT CANDLE</div>
           <div class="candle-stage-mode" id="stageMode"></div>
         </div>
@@ -317,8 +317,8 @@ hr{border:none;border-top:1px solid var(--border);margin:10px 0}
               <option value="top">At box top</option>
               <option value="bottom">At box bottom</option>
               <option value="mid">Mid-box</option>
-              <option value="break_up">Breaking above box</option>
-              <option value="break_down">Breaking below box</option>
+              <option value="break_up">Above box (breakout up)</option>
+              <option value="break_down">Below box (breakout down)</option>
             </select>
           </div>
 
@@ -588,99 +588,116 @@ function scoreMTF(){
 }
 
 // ── CANDLE VISUALISATION ──
-// stageH=220 usable px, boxTop=50, boxBot=150 (those are pixel positions inside the stage)
-const STAGE_H=220, BOX_TOP_PX=55, BOX_BOT_PX=155;
+// The stage div is ~240px tall. Box occupies a fixed pixel band within it.
+// SVG viewBox matches stage height so coordinates are 1:1 with CSS px.
+// BOX_TOP_PX and BOX_BOT_PX are y-pixel positions in the stage (top of stage = y=0).
+// In SVG, y increases downward — so box top is a SMALLER y value than box bottom.
+// "At box top" means the candle body sits near BOX_TOP_PX (small y = high on screen).
+// "At box bottom" means the candle body sits near BOX_BOT_PX (large y = low on screen).
+
+const SVG_H=240, BOX_TOP_PX=70, BOX_BOT_PX=180;
+const BOX_MID=(BOX_TOP_PX+BOX_BOT_PX)/2; // 125
+const BOX_H=BOX_BOT_PX-BOX_TOP_PX;       // 110
 
 function drawCandle(body,pos){
   const svg=document.getElementById('candleSVG');
-  const cx=24, W=48;
-  // candle geometry params
-  let bodyTop,bodyBot,wickTop,wickBot,col,prevBodyTop,prevBodyBot;
-  const MID=(BOX_TOP_PX+BOX_BOT_PX)/2; // 105
-  const BOX_H=BOX_BOT_PX-BOX_TOP_PX;   // 100
+  const cx=24;
 
-  // position the box zone overlay
-  const stage=document.getElementById('candleStage');
-  const boxZone=document.getElementById('boxZone');
-  const bhi=document.getElementById('boxLineHi');
-  const blo=document.getElementById('boxLineLo');
-  const bLH=document.getElementById('boxLabelHi');
-  const bLL=document.getElementById('boxLabelLo');
-  boxZone.style.top=BOX_TOP_PX+'px';
-  boxZone.style.height=BOX_H+'px';
-  bhi.style.top=BOX_TOP_PX+'px';
-  blo.style.top=BOX_BOT_PX+'px';
-  bLH.style.top=(BOX_TOP_PX-2)+'px';
-  bLL.style.top=(BOX_BOT_PX-2)+'px';
+  // Set svg dimensions to match stage
+  svg.setAttribute('viewBox','0 0 48 '+SVG_H);
+  svg.setAttribute('height',SVG_H);
 
-  // break arrow
+  // Position box zone overlay elements (these are CSS-positioned inside the stage div)
+  document.getElementById('boxZone').style.top=BOX_TOP_PX+'px';
+  document.getElementById('boxZone').style.height=BOX_H+'px';
+  document.getElementById('boxLineHi').style.top=BOX_TOP_PX+'px';
+  document.getElementById('boxLineLo').style.top=BOX_BOT_PX+'px';
+  document.getElementById('boxLabelHi').style.top=(BOX_TOP_PX-14)+'px';
+  document.getElementById('boxLabelLo').style.top=(BOX_BOT_PX+2)+'px';
+
+  // Break arrow
   const arrow=document.getElementById('breakArrow');
   arrow.style.opacity='0';
 
-  // build candle shape based on body type
-  let fillColor='#22c55e';
+  // ── Define candle shape relative to an anchor point ──
+  // anchor = where the candle's centre/body will be placed vertically.
+  // All measurements are offsets FROM the anchor (in SVG px, positive = downward).
+  let col, bUp, bDn, wUp, wDn, prevBUp, prevBDn;
+  // bUp = body top offset from anchor (negative = above anchor)
+  // bDn = body bottom offset from anchor (positive = below anchor)
+
   if(body==='big_bull'){
-    bodyTop=MID-30; bodyBot=MID+30; wickTop=bodyTop-14; wickBot=bodyBot+10;col='#22c55e';
+    col='#22c55e'; bUp=-28; bDn=28; wUp=-40; wDn=36;
   } else if(body==='big_bear'){
-    bodyTop=MID-30; bodyBot=MID+30; wickTop=bodyTop-10; wickBot=bodyBot+14;col='#ef4444';
+    col='#ef4444'; bUp=-28; bDn=28; wUp=-36; wDn=40;
   } else if(body==='small'){
-    bodyTop=MID-7; bodyBot=MID+7; wickTop=bodyTop-20; wickBot=bodyBot+20;col='#8b8fa8';
+    col='#8b8fa8'; bUp=-6; bDn=6; wUp=-22; wDn=22;
   } else if(body==='pin_bull'){
-    bodyTop=MID+18; bodyBot=MID+28; wickTop=MID-30; wickBot=bodyBot+5;col='#22c55e';
+    // small body at top, long lower wick
+    col='#22c55e'; bUp=-4; bDn=6; wUp=-10; wDn=38;
   } else if(body==='pin_bear'){
-    bodyTop=MID-28; bodyBot=MID-18; wickTop=bodyTop-5; wickBot=MID+30;col='#ef4444';
+    // small body at bottom, long upper wick
+    col='#ef4444'; bUp=-6; bDn=4; wUp=-38; wDn=10;
   } else if(body==='engulf_bull'){
-    // two candles: prev bear small, current big bull
-    prevBodyTop=MID-14; prevBodyBot=MID+10;
-    bodyTop=MID-26; bodyBot=MID+26; wickTop=bodyTop-10; wickBot=bodyBot+10;col='#22c55e';
+    col='#22c55e'; bUp=-26; bDn=26; wUp=-34; wDn=32;
+    prevBUp=-10; prevBDn=14;
   } else if(body==='engulf_bear'){
-    prevBodyTop=MID-10; prevBodyBot=MID+14;
-    bodyTop=MID-26; bodyBot=MID+26; wickTop=bodyTop-10; wickBot=bodyBot+10;col='#ef4444';
+    col='#ef4444'; bUp=-26; bDn=26; wUp=-32; wDn=34;
+    prevBUp=-14; prevBDn=10;
   }
 
-  // adjust vertical position based on box position
-  let offsetY=0;
-  if(pos==='top'){offsetY=-(BOX_H*0.28);}
-  else if(pos==='bottom'){offsetY=BOX_H*0.28;}
-  else if(pos==='mid'){offsetY=0;}
-  else if(pos==='break_up'){
-    offsetY=-(BOX_H*0.55);
-    arrow.textContent='↑';arrow.style.top=(BOX_TOP_PX-40)+'px';arrow.style.color='var(--green)';arrow.style.opacity='1';
+  // ── Determine anchor Y based on position in box ──
+  // "top" = candle body near BOX_TOP_PX → anchor close to BOX_TOP_PX
+  // "bottom" = candle body near BOX_BOT_PX → anchor close to BOX_BOT_PX
+  // "break_up" = candle body ABOVE BOX_TOP_PX → anchor above box
+  // "break_down" = candle body BELOW BOX_BOT_PX → anchor below box
+  let anchor;
+  if(pos==='top'){
+    anchor=BOX_TOP_PX+16; // body sits just inside the top of the box
+  } else if(pos==='bottom'){
+    anchor=BOX_BOT_PX-16; // body sits just inside the bottom of the box
+  } else if(pos==='mid'){
+    anchor=BOX_MID;
+  } else if(pos==='break_up'){
+    anchor=BOX_TOP_PX-20; // body above the box
+    arrow.textContent='↑';
+    arrow.style.top=(BOX_TOP_PX-50)+'px';
+    arrow.style.color='var(--green)';
+    arrow.style.opacity='1';
   } else if(pos==='break_down'){
-    offsetY=BOX_H*0.55;
-    arrow.textContent='↓';arrow.style.top=(BOX_BOT_PX+8)+'px';arrow.style.color='var(--red)';arrow.style.opacity='1';
+    anchor=BOX_BOT_PX+20; // body below the box
+    arrow.textContent='↓';
+    arrow.style.top=(BOX_BOT_PX+14)+'px';
+    arrow.style.color='var(--red)';
+    arrow.style.opacity='1';
   }
 
-  bodyTop+=offsetY; bodyBot+=offsetY;
-  wickTop+=offsetY; wickBot+=offsetY;
-  if(prevBodyTop!==undefined){prevBodyTop+=offsetY;prevBodyBot+=offsetY;}
+  // ── Resolve absolute SVG y coordinates ──
+  const bodyTopY  = anchor + bUp;
+  const bodyBotY  = anchor + bDn;
+  const wickTopY  = anchor + wUp;
+  const wickBotY  = anchor + wDn;
 
-  // clamp to 10..130 visible range
-  const clamp=(v)=>Math.max(10,Math.min(130,v));
-  bodyTop=clamp(bodyTop);bodyBot=clamp(bodyBot);
-  wickTop=clamp(wickTop);wickBot=clamp(wickBot);
+  // clamp wick only (body must not be clamped or it shrinks)
+  const clampW=(v)=>Math.max(4,Math.min(SVG_H-4,v));
 
   let svgContent='';
 
-  // previous candle for engulfing
-  if(prevBodyTop!==undefined){
+  // Previous candle for engulfing patterns
+  if(prevBUp!==undefined){
     const pCol=col==='#22c55e'?'#ef4444':'#22c55e';
-    const pTop=clamp(prevBodyTop),pBot=clamp(prevBodyBot);
-    svgContent+=`<line x1="${cx-10}" y1="${pTop-8}" x2="${cx-10}" y2="${pBot+8}" stroke="#4a4e63" stroke-width="1.5"/>`;
-    svgContent+=`<rect x="${cx-16}" y="${pTop}" width="12" height="${pBot-pTop}" fill="${pCol}" rx="1"/>`;
+    const pTop=anchor+prevBUp, pBot=anchor+prevBDn;
+    svgContent+=`<line x1="${cx-12}" y1="${clampW(pTop-10)}" x2="${cx-12}" y2="${clampW(pBot+10)}" stroke="#4a4e63" stroke-width="1.5"/>`;
+    svgContent+=`<rect x="${cx-18}" y="${pTop}" width="12" height="${Math.max(pBot-pTop,3)}" fill="${pCol}" rx="1" opacity="0.7"/>`;
   }
 
-  // main candle wick
-  svgContent+=`<line x1="${cx}" y1="${wickTop}" x2="${cx}" y2="${wickBot}" stroke="#4a4e63" stroke-width="1.5"/>`;
+  // Main wick (clamped)
+  svgContent+=`<line x1="${cx}" y1="${clampW(wickTopY)}" x2="${cx}" y2="${clampW(wickBotY)}" stroke="#6b7280" stroke-width="1.5"/>`;
 
-  // main candle body
-  const bh=Math.max(bodyBot-bodyTop,3);
-  svgContent+=`<rect x="${cx-8}" y="${bodyTop}" width="16" height="${bh}" fill="${col}" rx="1"/>`;
+  // Main body (never clamped — preserves size)
+  svgContent+=`<rect x="${cx-8}" y="${bodyTopY}" width="16" height="${Math.max(bodyBotY-bodyTopY,3)}" fill="${col}" rx="1"/>`;
 
   svg.innerHTML=svgContent;
-
-  // update svg height to cover full visible range
-  svg.setAttribute('viewBox',`0 0 48 140`);
 }
 
 // ── CANDLE READER ──
@@ -784,10 +801,12 @@ function readCandle(){
   dirTag.style.color=dir==='long'?'var(--green)':'var(--red)';
   dirTag.style.borderColor=dir==='long'?'rgba(34,197,94,0.3)':'rgba(239,68,68,0.3)';
 
-  // update stage label
-  document.getElementById('stageLabel').textContent=
-    pos==='break_up'?'BREAKING UP':pos==='break_down'?'BREAKING DOWN':
-    pos==='top'?'AT BOX TOP':pos==='bottom'?'AT BOX BOTTOM':'MID BOX';
+  // update stage label — clean position names, no "breaking" text
+  const posLabels={
+    top:'AT BOX TOP', bottom:'AT BOX BOTTOM', mid:'MID BOX',
+    break_up:'ABOVE BOX', break_down:'BELOW BOX'
+  };
+  document.getElementById('stageLabel').textContent=posLabels[pos]||pos;
   const modeColors={breakout:'var(--gold)',retest:'var(--amber)',reversal:'var(--blue)',null:'var(--text3)'};
   document.getElementById('stageMode').textContent=suggest?suggest.toUpperCase():'—';
   document.getElementById('stageMode').style.color=suggest?modeColors[suggest]:'var(--text3)';
