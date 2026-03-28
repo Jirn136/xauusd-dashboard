@@ -82,21 +82,8 @@ select{cursor:pointer}
 
 #candleSVG{position:relative;z-index:2;transition:all .3s;overflow:visible}
 
-.candle-stage {
-  min-height: 260px !important; /* Provide more room for candle height */
-}
-
-#candleSVG {
-  overflow: visible !important; /* Critical to prevent squashing at edges */
-}
-
-#candleSVG {
-  overflow: visible !important; /* Prevents squashing/clipping when breaking out */
-}
-
-.candle-stage {
-  min-height: 250px; /* Increased height to give the breakout more room */
-}.candle-stage-mode{font-family:var(--mono);font-size:10px;font-weight:700;margin-top:3px;position:relative;z-index:2;letter-spacing:.04em;min-height:14px;transition:color .3s}
+.candle-stage-label{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-top:8px;position:relative;z-index:2}
+.candle-stage-mode{font-family:var(--mono);font-size:10px;font-weight:700;margin-top:3px;position:relative;z-index:2;letter-spacing:.04em;min-height:14px;transition:color .3s}
 
 .break-arrow{position:absolute;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:18px;opacity:0;transition:all .4s;z-index:3}
 
@@ -604,124 +591,214 @@ function scoreMTF(){
 // stageH=220 usable px, boxTop=50, boxBot=150 (those are pixel positions inside the stage)
 const STAGE_H=220, BOX_TOP_PX=55, BOX_BOT_PX=155;
 
-function drawCandle(body, pos) {
-  const svg = document.getElementById('candleSVG');
-  const cx = 24;
-  let bodyTop, bodyBot, wickTop, wickBot, col, prevBodyTop, prevBodyBot;
-  
-  // FIXED: Box geometry for a 220px stage
-  const BOX_TOP_PX = 60; 
-  const BOX_BOT_PX = 160;
-  const MID = (BOX_TOP_PX + BOX_BOT_PX) / 2; // 110
-  const BOX_H = BOX_BOT_PX - BOX_TOP_PX;     // 100
+function drawCandle(body,pos){
+  const svg=document.getElementById('candleSVG');
+  const cx=24, W=48;
+  // candle geometry params
+  let bodyTop,bodyBot,wickTop,wickBot,col,prevBodyTop,prevBodyBot;
+  const MID=(BOX_TOP_PX+BOX_BOT_PX)/2; // 105
+  const BOX_H=BOX_BOT_PX-BOX_TOP_PX;   // 100
 
-  // UI CLEANUP: Remove redundant stage text
-  document.getElementById('stageLabel').style.display = 'none';
-  document.getElementById('stageMode').style.display = 'none';
+  // position the box zone overlay
+  const stage=document.getElementById('candleStage');
+  const boxZone=document.getElementById('boxZone');
+  const bhi=document.getElementById('boxLineHi');
+  const blo=document.getElementById('boxLineLo');
+  const bLH=document.getElementById('boxLabelHi');
+  const bLL=document.getElementById('boxLabelLo');
+  boxZone.style.top=BOX_TOP_PX+'px';
+  boxZone.style.height=BOX_H+'px';
+  bhi.style.top=BOX_TOP_PX+'px';
+  blo.style.top=BOX_BOT_PX+'px';
+  bLH.style.top=(BOX_TOP_PX-2)+'px';
+  bLL.style.top=(BOX_BOT_PX-2)+'px';
 
-  const boxZone = document.getElementById('boxZone');
-  const bhi = document.getElementById('boxLineHi');
-  const blo = document.getElementById('boxLineLo');
-  const bLH = document.getElementById('boxLabelHi');
-  const bLL = document.getElementById('boxLabelLo');
-  const arrow = document.getElementById('breakArrow');
+  // break arrow
+  const arrow=document.getElementById('breakArrow');
+  arrow.style.opacity='0';
 
-  // Update box visuals
-  boxZone.style.top = BOX_TOP_PX + 'px';
-  boxZone.style.height = BOX_H + 'px';
-  bhi.style.top = BOX_TOP_PX + 'px';
-  blo.style.top = BOX_BOT_PX + 'px';
-  bLH.style.top = (BOX_TOP_PX - 2) + 'px';
-  bLL.style.top = (BOX_BOT_PX - 2) + 'px';
-  arrow.style.opacity = '0';
-
-  // Define Base Shapes
-  if (body === 'big_bull') {
-    bodyTop = MID - 30; bodyBot = MID + 30; wickTop = bodyTop - 14; wickBot = bodyBot + 10; col = '#22c55e';
-  } else if (body === 'big_bear') {
-    bodyTop = MID - 30; bodyBot = MID + 30; wickTop = bodyTop - 10; wickBot = bodyBot + 14; col = '#ef4444';
-  } else if (body === 'small') {
-    bodyTop = MID - 7; bodyBot = MID + 7; wickTop = bodyTop - 20; wickBot = bodyBot + 20; col = '#8b8fa8';
-  } else if (body === 'pin_bull') {
-    bodyTop = MID + 18; bodyBot = MID + 28; wickTop = MID - 30; wickBot = bodyBot + 5; col = '#22c55e';
-  } else if (body === 'pin_bear') {
-    bodyTop = MID - 28; bodyBot = MID - 18; wickTop = bodyTop - 5; wickBot = MID + 30; col = '#ef4444';
-  } else if (body === 'engulf_bull') {
-    prevBodyTop = MID - 14; prevBodyBot = MID + 10;
-    bodyTop = MID - 26; bodyBot = MID + 26; wickTop = bodyTop - 10; wickBot = bodyBot + 10; col = '#22c55e';
-  } else if (body === 'engulf_bear') {
-    prevBodyTop = MID - 10; prevBodyBot = MID + 14;
-    bodyTop = MID - 26; bodyBot = MID + 26; wickTop = bodyTop - 10; wickBot = bodyBot + 10; col = '#ef4444';
+  // build candle shape based on body type
+  let fillColor='#22c55e';
+  if(body==='big_bull'){
+    bodyTop=MID-30; bodyBot=MID+30; wickTop=bodyTop-14; wickBot=bodyBot+10;col='#22c55e';
+  } else if(body==='big_bear'){
+    bodyTop=MID-30; bodyBot=MID+30; wickTop=bodyTop-10; wickBot=bodyBot+14;col='#ef4444';
+  } else if(body==='small'){
+    bodyTop=MID-7; bodyBot=MID+7; wickTop=bodyTop-20; wickBot=bodyBot+20;col='#8b8fa8';
+  } else if(body==='pin_bull'){
+    bodyTop=MID+18; bodyBot=MID+28; wickTop=MID-30; wickBot=bodyBot+5;col='#22c55e';
+  } else if(body==='pin_bear'){
+    bodyTop=MID-28; bodyBot=MID-18; wickTop=bodyTop-5; wickBot=MID+30;col='#ef4444';
+  } else if(body==='engulf_bull'){
+    // two candles: prev bear small, current big bull
+    prevBodyTop=MID-14; prevBodyBot=MID+10;
+    bodyTop=MID-26; bodyBot=MID+26; wickTop=bodyTop-10; wickBot=bodyBot+10;col='#22c55e';
+  } else if(body==='engulf_bear'){
+    prevBodyTop=MID-10; prevBodyBot=MID+14;
+    bodyTop=MID-26; bodyBot=MID+26; wickTop=bodyTop-10; wickBot=bodyBot+10;col='#ef4444';
   }
 
-  // FIXED POSITIONING: Precise offsets for alignment
-  let offsetY = 0;
-  if (pos === 'top') {
-    offsetY = -48; // Touches the HIGH line
-  } else if (pos === 'bottom') {
-    offsetY = 48;  // Touches the LOW line
-  } else if (pos === 'mid') {
-    offsetY = 0;
-  } else if (pos === 'break_up') {
-    offsetY = -75; // Positioned clearly above the box
-    arrow.textContent = '↑'; arrow.style.top = (BOX_TOP_PX - 45) + 'px'; 
-    arrow.style.color = 'var(--green)'; arrow.style.opacity = '1';
-  } else if (pos === 'break_down') {
-    offsetY = 75;  // Positioned clearly below the box
-    arrow.textContent = '↓'; arrow.style.top = (BOX_BOT_PX + 15) + 'px'; 
-    arrow.style.color = 'var(--red)'; arrow.style.opacity = '1';
+  // adjust vertical position based on box position
+  let offsetY=0;
+  if(pos==='top'){offsetY=-(BOX_H*0.28);}
+  else if(pos==='bottom'){offsetY=BOX_H*0.28;}
+  else if(pos==='mid'){offsetY=0;}
+  else if(pos==='break_up'){
+    offsetY=-(BOX_H*0.55);
+    arrow.textContent='↑';arrow.style.top=(BOX_TOP_PX-40)+'px';arrow.style.color='var(--green)';arrow.style.opacity='1';
+  } else if(pos==='break_down'){
+    offsetY=BOX_H*0.55;
+    arrow.textContent='↓';arrow.style.top=(BOX_BOT_PX+8)+'px';arrow.style.color='var(--red)';arrow.style.opacity='1';
   }
 
-  bodyTop += offsetY; bodyBot += offsetY;
-  wickTop += offsetY; wickBot += offsetY;
-  if (prevBodyTop !== undefined) { prevBodyTop += offsetY; prevBodyBot += offsetY; }
+  bodyTop+=offsetY; bodyBot+=offsetY;
+  wickTop+=offsetY; wickBot+=offsetY;
+  if(prevBodyTop!==undefined){prevBodyTop+=offsetY;prevBodyBot+=offsetY;}
 
-  // Prevent "Squashing" by allowing expansion beyond standard viewbox
-  const clamp = (v) => Math.max(-100, Math.min(240, v));
-  bodyTop = clamp(bodyTop); bodyBot = clamp(bodyBot);
-  wickTop = clamp(wickTop); wickBot = clamp(wickBot);
+  // clamp to 10..130 visible range
+  const clamp=(v)=>Math.max(10,Math.min(130,v));
+  bodyTop=clamp(bodyTop);bodyBot=clamp(bodyBot);
+  wickTop=clamp(wickTop);wickBot=clamp(wickBot);
 
-  let svgContent = '';
-  if (prevBodyTop !== undefined) {
-    const pCol = col === '#22c55e' ? '#ef4444' : '#22c55e';
-    svgContent += `<line x1="${cx - 12}" y1="${clamp(prevBodyTop) - 5}" x2="${cx - 12}" y2="${clamp(prevBodyBot) + 5}" stroke="#4a4e63" stroke-width="1.5"/>`;
-    svgContent += `<rect x="${cx - 18}" y="${clamp(prevBodyTop)}" width="12" height="${Math.max(prevBodyBot - prevBodyTop, 4)}" fill="${pCol}" rx="1"/>`;
+  let svgContent='';
+
+  // previous candle for engulfing
+  if(prevBodyTop!==undefined){
+    const pCol=col==='#22c55e'?'#ef4444':'#22c55e';
+    const pTop=clamp(prevBodyTop),pBot=clamp(prevBodyBot);
+    svgContent+=`<line x1="${cx-10}" y1="${pTop-8}" x2="${cx-10}" y2="${pBot+8}" stroke="#4a4e63" stroke-width="1.5"/>`;
+    svgContent+=`<rect x="${cx-16}" y="${pTop}" width="12" height="${pBot-pTop}" fill="${pCol}" rx="1"/>`;
   }
 
-  svgContent += `<line x1="${cx}" y1="${wickTop}" x2="${cx}" y2="${wickBot}" stroke="#4a4e63" stroke-width="1.5"/>`;
-  svgContent += `<rect x="${cx - 8}" y="${bodyTop}" width="16" height="${Math.max(bodyBot - bodyTop, 4)}" fill="${col}" rx="1"/>`;
+  // main candle wick
+  svgContent+=`<line x1="${cx}" y1="${wickTop}" x2="${cx}" y2="${wickBot}" stroke="#4a4e63" stroke-width="1.5"/>`;
 
-  svg.innerHTML = svgContent;
-  svg.setAttribute('viewBox', `0 0 48 220`); // Increased height to prevent clipping
+  // main candle body
+  const bh=Math.max(bodyBot-bodyTop,3);
+  svgContent+=`<rect x="${cx-8}" y="${bodyTop}" width="16" height="${bh}" fill="${col}" rx="1"/>`;
+
+  svg.innerHTML=svgContent;
+
+  // update svg height to cover full visible range
+  svg.setAttribute('viewBox',`0 0 48 140`);
 }
 
 // ── CANDLE READER ──
-function readCandle() {
-  const body = document.getElementById('cBody').value;
-  const pos = document.getElementById('cPos').value;
-  const desc = document.getElementById('modeDesc');
-  
-  // Set global direction based on candle character
-  if (body.includes('bull')) dir = 'long';
-  if (body.includes('bear')) dir = 'short';
-  
-  // Trigger drawing with fixed offsets
-  drawCandle(body, pos);
-  
-  // Logic Matrix for Trade Mode Suggestion
-  let suggest = null;
-  if (pos === 'break_up' && (body === 'big_bull' || body === 'engulf_bull')) suggest = 'breakout';
-  else if (pos === 'break_down' && (body === 'big_bear' || body === 'engulf_bear')) suggest = 'breakout';
-  else if ((pos === 'top' && (body === 'pin_bear' || body === 'engulf_bear')) || 
-           (pos === 'bottom' && (body === 'pin_bull' || body === 'engulf_bull'))) suggest = 'reversal';
-  
-  if (suggest) setMode(suggest, true);
-  
-  // UI Updates for tags and signals
-  const dirTag = document.getElementById('dirTag');
-  dirTag.textContent = dir.toUpperCase();
-  dirTag.style.color = dir === 'long' ? 'var(--green)' : 'var(--red)';
-  
+function readCandle(){
+  const body=document.getElementById('cBody').value;
+  const pos=document.getElementById('cPos').value;
+  const desc=document.getElementById('modeDesc');
+  let suggest=null,txt='',sigQ=[];
+
+  // direction inference
+  if(body==='big_bull'||body==='pin_bull'||body==='engulf_bull') dir='long';
+  else if(body==='big_bear'||body==='pin_bear'||body==='engulf_bear') dir='short';
+  // keep prev dir for small/indecision
+
+  // signal quality helpers
+  const strong=(body==='big_bull'||body==='big_bear'||body==='engulf_bull'||body==='engulf_bear');
+  const pin=(body==='pin_bull'||body==='pin_bear');
+  const indecision=body==='small';
+  const atEdge=(pos==='top'||pos==='bottom');
+  const breaking=(pos==='break_up'||pos==='break_down');
+
+  // signal 1: body strength
+  let s1c='',s1t='';
+  if(strong){s1c='go';s1t='Strong body — high momentum';}
+  else if(pin){s1c='go';s1t='Pin bar — clean rejection';}
+  else{s1c='warn';s1t='Small body — low conviction';}
+
+  // signal 2: position quality
+  let s2c='',s2t='';
+  if(breaking){s2c='go';s2t='At box boundary — valid trigger';}
+  else if(atEdge){s2c='go';s2t='At box edge — good position';}
+  else{s2c='warn';s2t='Mid-box — wait for edge';}
+
+  // logic matrix → mode suggestion
+  if(pos==='break_up'&&(body==='big_bull'||body==='engulf_bull')){
+    suggest='breakout';dir='long';
+    txt='<span class="tag green">BREAKOUT LONG</span> — Strong bullish close above box. Enter on this candle close or next bar open.';
+    sigQ=[s1c,s2c,'go'];
+  } else if(pos==='break_down'&&(body==='big_bear'||body==='engulf_bear')){
+    suggest='breakout';dir='short';
+    txt='<span class="tag red">BREAKOUT SHORT</span> — Strong bearish close below box. Enter on close.';
+    sigQ=[s1c,s2c,'go'];
+  } else if(pos==='break_up'&&body==='small'){
+    suggest='retest';dir='long';
+    txt='<span class="tag">WAIT — RETEST</span> — Weak close above. Wait for pullback to box top, then long on retest.';
+    sigQ=[s1c,s2c,'warn'];
+  } else if(pos==='break_down'&&body==='small'){
+    suggest='retest';dir='short';
+    txt='<span class="tag">WAIT — RETEST</span> — Weak break below. Wait for retest of box bottom before shorting.';
+    sigQ=[s1c,s2c,'warn'];
+  } else if(pos==='break_up'&&(body==='big_bear'||body==='engulf_bear')){
+    suggest='reversal';dir='short';
+    txt='<span class="tag red">FALSE BREAK — SHORT</span> — Bearish candle closing back inside box. Short the false breakout.';
+    sigQ=['go','go','go'];
+  } else if(pos==='break_down'&&(body==='big_bull'||body==='engulf_bull')){
+    suggest='reversal';dir='long';
+    txt='<span class="tag green">FALSE BREAK — LONG</span> — Bullish candle closing back inside box. Long the false breakout.';
+    sigQ=['go','go','go'];
+  } else if(pos==='top'&&(body==='pin_bear'||body==='engulf_bear')){
+    suggest='reversal';dir='short';
+    txt='<span class="tag red">REVERSAL SHORT</span> — Rejection at box top. Short with SL above the wick.';
+    sigQ=[s1c,s2c,'go'];
+  } else if(pos==='bottom'&&(body==='pin_bull'||body==='engulf_bull')){
+    suggest='reversal';dir='long';
+    txt='<span class="tag green">REVERSAL LONG</span> — Rejection at box bottom. Long with SL below the wick.';
+    sigQ=[s1c,s2c,'go'];
+  } else if(pos==='top'&&(body==='big_bull')){
+    suggest='breakout';dir='long';
+    txt='<span class="tag">WATCH BREAKOUT</span> — Big bull pushing box top. Wait for confirmed close above high.';
+    sigQ=[s1c,s2c,'warn'];
+  } else if(pos==='bottom'&&(body==='big_bear')){
+    suggest='breakout';dir='short';
+    txt='<span class="tag">WATCH BREAKOUT</span> — Big bear pushing box bottom. Wait for confirmed close below low.';
+    sigQ=[s1c,s2c,'warn'];
+  } else if(indecision){
+    suggest=null;
+    txt='<span class="tag gray">NO TRADE</span> — Indecision candle. Wait for a decisive candle at a box edge.';
+    sigQ=['warn','warn','stop'];
+  } else {
+    suggest=null;
+    txt='<span class="tag gray">WAIT</span> — Mixed signal. Need a cleaner candle at a box edge.';
+    sigQ=['warn','warn','warn'];
+  }
+
+  desc.innerHTML=txt;
+
+  // update signals
+  const sigLabels=['Body strength','Edge position','Setup quality'];
+  const sigTexts=[
+    strong?'Strong body — high momentum':pin?'Pin bar — clean rejection':'Small body — low conviction',
+    breaking?'At box boundary — valid':atEdge?'At box edge — valid':'Mid-box — wait for edge',
+    sigQ[2]==='go'?'Setup confirmed — ready':sigQ[2]==='warn'?'Setup partial — exercise caution':'No valid setup — skip trade'
+  ];
+  for(let i=1;i<=3;i++){
+    document.getElementById('sig'+i).className='signal-dot '+(sigQ[i-1]||'');
+    document.getElementById('sig'+i+'txt').textContent=sigTexts[i-1];
+  }
+
+  const dirTag=document.getElementById('dirTag');
+  dirTag.textContent=dir==='long'?'LONG':'SHORT';
+  dirTag.style.color=dir==='long'?'var(--green)':'var(--red)';
+  dirTag.style.borderColor=dir==='long'?'rgba(34,197,94,0.3)':'rgba(239,68,68,0.3)';
+
+  // update stage label
+  document.getElementById('stageLabel').textContent=
+    pos==='break_up'?'BREAKING UP':pos==='break_down'?'BREAKING DOWN':
+    pos==='top'?'AT BOX TOP':pos==='bottom'?'AT BOX BOTTOM':'MID BOX';
+  const modeColors={breakout:'var(--gold)',retest:'var(--amber)',reversal:'var(--blue)',null:'var(--text3)'};
+  document.getElementById('stageMode').textContent=suggest?suggest.toUpperCase():'—';
+  document.getElementById('stageMode').style.color=suggest?modeColors[suggest]:'var(--text3)';
+
+  // draw candle
+  drawCandle(body,pos);
+
+  // set mode buttons
+  ['mBreak','mRetest','mRev'].forEach(id=>document.getElementById(id).className='mode-btn');
+  const map={breakout:'mBreak',retest:'mRetest',reversal:'mRev'};
+  if(suggest){document.getElementById(map[suggest]).className='mode-btn suggest';setMode(suggest,true);}
   calc();
 }
 
