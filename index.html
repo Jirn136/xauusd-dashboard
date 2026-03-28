@@ -82,8 +82,17 @@ select{cursor:pointer}
 
 #candleSVG{position:relative;z-index:2;transition:all .3s;overflow:visible}
 
-.candle-stage-label{font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-top:8px;position:relative;z-index:2}
-.candle-stage-mode{font-family:var(--mono);font-size:10px;font-weight:700;margin-top:3px;position:relative;z-index:2;letter-spacing:.04em;min-height:14px;transition:color .3s}
+.candle-stage-label, .candle-stage-mode {
+  display: none !important; /* Hide the redundant Select/Breakout text */
+}
+
+#candleSVG {
+  overflow: visible !important; /* Prevents squashing/clipping when breaking out */
+}
+
+.candle-stage {
+  min-height: 250px; /* Increased height to give the breakout more room */
+}.candle-stage-mode{font-family:var(--mono);font-size:10px;font-weight:700;margin-top:3px;position:relative;z-index:2;letter-spacing:.04em;min-height:14px;transition:color .3s}
 
 .break-arrow{position:absolute;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:18px;opacity:0;transition:all .4s;z-index:3}
 
@@ -598,20 +607,10 @@ function drawCandle(body, pos) {
   const MID = (BOX_TOP_PX + BOX_BOT_PX) / 2; 
   const BOX_H = BOX_BOT_PX - BOX_TOP_PX; 
 
-  const stage = document.getElementById('candleStage');
-  const boxZone = document.getElementById('boxZone');
-  const bhi = document.getElementById('boxLineHi');
-  const blo = document.getElementById('boxLineLo');
-  const bLH = document.getElementById('boxLabelHi');
-  const bLL = document.getElementById('boxLabelLo');
+  // UI elements cleanup
+  document.getElementById('stageLabel').style.display = 'none'; // Remove "SELECT CANDLE"
+  document.getElementById('stageMode').style.display = 'none';  // Remove "BREAKOUT" text from stage
   
-  boxZone.style.top = BOX_TOP_PX + 'px';
-  boxZone.style.height = BOX_H + 'px';
-  bhi.style.top = BOX_TOP_PX + 'px';
-  blo.style.top = BOX_BOT_PX + 'px';
-  bLH.style.top = (BOX_TOP_PX - 2) + 'px';
-  bLL.style.top = (BOX_BOT_PX - 2) + 'px';
-
   const arrow = document.getElementById('breakArrow');
   arrow.style.opacity = '0';
 
@@ -634,21 +633,21 @@ function drawCandle(body, pos) {
     bodyTop = MID - 26; bodyBot = MID + 26; wickTop = bodyTop - 10; wickBot = bodyBot + 10; col = '#ef4444';
   }
 
-  // Calculate Vertical Offset based on Position
+  // Calculate Vertical Offset - Fixed for proper alignment
   let offsetY = 0;
   if (pos === 'top') {
-    offsetY = -(BOX_H * 0.42); // Pushes candle to touch the top line
+    offsetY = -45; // Moves candle up to the High line
   } else if (pos === 'bottom') {
-    offsetY = (BOX_H * 0.42);  // Pushes candle to touch the bottom line
+    offsetY = 45;  // Moves candle down to the Low line
   } else if (pos === 'mid') {
     offsetY = 0;
   } else if (pos === 'break_up') {
-    offsetY = -(BOX_H * 0.65); // Clear break above
-    arrow.textContent = '↑'; arrow.style.top = (BOX_TOP_PX - 40) + 'px'; 
+    offsetY = -70; // Positioned clearly above the box
+    arrow.textContent = '↑'; arrow.style.top = (BOX_TOP_PX - 45) + 'px'; 
     arrow.style.color = 'var(--green)'; arrow.style.opacity = '1';
   } else if (pos === 'break_down') {
-    offsetY = (BOX_H * 0.65); // Clear break below
-    arrow.textContent = '↓'; arrow.style.top = (BOX_BOT_PX + 8) + 'px'; 
+    offsetY = 70;  // Positioned clearly below the box
+    arrow.textContent = '↓'; arrow.style.top = (BOX_BOT_PX + 15) + 'px'; 
     arrow.style.color = 'var(--red)'; arrow.style.opacity = '1';
   }
 
@@ -656,21 +655,20 @@ function drawCandle(body, pos) {
   wickTop += offsetY; wickBot += offsetY;
   if (prevBodyTop !== undefined) { prevBodyTop += offsetY; prevBodyBot += offsetY; }
 
-  const clamp = (v) => Math.max(5, Math.min(135, v));
+  // Increased clamp range to prevent "squashing" at the edges
+  const clamp = (v) => Math.max(-50, Math.min(190, v));
   bodyTop = clamp(bodyTop); bodyBot = clamp(bodyBot);
   wickTop = clamp(wickTop); wickBot = clamp(wickBot);
 
   let svgContent = '';
   if (prevBodyTop !== undefined) {
     const pCol = col === '#22c55e' ? '#ef4444' : '#22c55e';
-    const pTop = clamp(prevBodyTop), pBot = clamp(prevBodyBot);
-    svgContent += `<line x1="${cx - 10}" y1="${pTop - 8}" x2="${cx - 10}" y2="${pBot + 8}" stroke="#4a4e63" stroke-width="1.5"/>`;
-    svgContent += `<rect x="${cx - 16}" y="${pTop}" width="12" height="${pBot - pTop}" fill="${pCol}" rx="1"/>`;
+    svgContent += `<line x1="${cx - 12}" y1="${clamp(prevBodyTop) - 5}" x2="${cx - 12}" y2="${clamp(prevBodyBot) + 5}" stroke="#4a4e63" stroke-width="1.5"/>`;
+    svgContent += `<rect x="${cx - 18}" y="${clamp(prevBodyTop)}" width="12" height="${Math.max(prevBodyBot - prevBodyTop, 4)}" fill="${pCol}" rx="1"/>`;
   }
 
   svgContent += `<line x1="${cx}" y1="${wickTop}" x2="${cx}" y2="${wickBot}" stroke="#4a4e63" stroke-width="1.5"/>`;
-  const bh = Math.max(bodyBot - bodyTop, 3);
-  svgContent += `<rect x="${cx - 8}" y="${bodyTop}" width="16" height="${bh}" fill="${col}" rx="1"/>`;
+  svgContent += `<rect x="${cx - 8}" y="${bodyTop}" width="16" height="${Math.max(bodyBot - bodyTop, 4)}" fill="${col}" rx="1"/>`;
 
   svg.innerHTML = svgContent;
   svg.setAttribute('viewBox', `0 0 48 140`);
