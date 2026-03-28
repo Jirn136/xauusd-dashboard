@@ -639,17 +639,29 @@ function drawCandle(body,pos){
   }
 
   // adjust vertical position based on box position
-  let offsetY=0;
-  if(pos==='top'){offsetY=-(BOX_H*0.28);}
-  else if(pos==='bottom'){offsetY=BOX_H*0.28;}
-  else if(pos==='mid'){offsetY=0;}
-  else if(pos==='break_up'){
+// adjust vertical position based on box position
+let offsetY=0;
+if(pos==='top'){offsetY=-(BOX_H*0.28);}
+else if(pos==='bottom'){offsetY=BOX_H*0.28;}
+else if(pos==='mid'){offsetY=0;}
+else if(pos==='break_up'){
     offsetY=-(BOX_H*0.55);
     arrow.textContent='↑';arrow.style.top=(BOX_TOP_PX-40)+'px';arrow.style.color='var(--green)';arrow.style.opacity='1';
-  } else if(pos==='break_down'){
+} else if(pos==='break_down'){
     offsetY=BOX_H*0.55;
     arrow.textContent='↓';arrow.style.top=(BOX_BOT_PX+8)+'px';arrow.style.color='var(--red)';arrow.style.opacity='1';
-  }
+}
+
+// Special handling for big candles at box edges to prevent visual distortion
+if((body==='big_bull' || body==='big_bear' || body==='engulf_bull' || body==='engulf_bear') && 
+   (pos==='top' || pos==='bottom')) {
+    if(pos==='top') {
+        offsetY = -(BOX_H * 0.4); // Move up more to show full candle
+    } else {
+        offsetY = BOX_H * 0.4; // Move down more to show full candle
+    }
+}
+
 
   bodyTop+=offsetY; bodyBot+=offsetY;
   wickTop+=offsetY; wickBot+=offsetY;
