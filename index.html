@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XAUUSD Box Strategy Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c0f;
+    --bg2: #0f1217;
+    --bg3: #141820;
+    --panel: #191d26;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --gold: #f0b429;
+    --gold2: #e09c18;
+    --gold-dim: rgba(240,180,41,0.12);
+    --gold-glow: rgba(240,180,41,0.25);
+    --green: #22c55e;
+    --green-dim: rgba(34,197,94,0.1);
+    --red: #ef4444;
+    --red-dim: rgba(239,68,68,0.1);
+    --blue: #3b82f6;
+    --blue-dim: rgba(59,130,246,0.1);
+    --amber: #f59e0b;
+    --amber-dim: rgba(245,158,11,0.1);
+    --text: #e8eaf0;
+    --text2: #8b8fa8;
+    --text3: #4a4e63;
+    --mono: 'Space Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 14px; }
+  body { min-height: 100vh; }
+
+  /* HEADER */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg2);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-mark {
+    width: 32px; height: 32px;
+    border: 1.5px solid var(--gold);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 11px; color: var(--gold);
+    letter-spacing: .05em;
+  }
+  .logo-text { font-family: var(--sans); font-weight: 700; font-size: 15px; color: var(--text); letter-spacing: .02em; }
+  .logo-sub { font-size: 10px; color: var(--text2); font-family: var(--mono); letter-spacing: .08em; }
+  .header-right { display: flex; align-items: center; gap: 16px; }
+  #sessionBadge {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .05em;
+    padding: 4px 10px; border-radius: 2px;
+    border: 1px solid var(--border2);
+    color: var(--text2);
+    transition: all .3s;
+  }
+  #sessionBadge.active { color: var(--green); border-color: rgba(34,197,94,0.3); background: var(--green-dim); }
+  #clockEl { font-family: var(--mono); font-size: 12px; color: var(--text2); }
+
+  /* MAIN GRID */
+  .container { max-width: 1400px; margin: 0 auto; padding: 20px 24px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr 260px; gap: 16px; }
+  .col { display: flex; flex-direction: column; gap: 14px; }
+
+  /* PANEL */
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    transition: border-color .2s;
+  }
+  .panel:focus-within { border-color: var(--border2); }
+  .panel-head {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .panel-title {
+    font-family: var(--mono); font-size: 10px; letter-spacing: .12em;
+    color: var(--text2); text-transform: uppercase;
+  }
+  .panel-tag {
+    font-family: var(--mono); font-size: 10px;
+    padding: 2px 6px; border-radius: 2px;
+    border: 1px solid var(--border2); color: var(--text3);
+  }
+  .panel-body { padding: 14px 16px; }
+
+  /* INPUTS */
+  .field-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .field-row:last-child { margin-bottom: 0; }
+  .field-label { font-family: var(--mono); font-size: 10px; color: var(--text2); min-width: 72px; letter-spacing: .04em; }
+  input[type=number], select {
+    background: var(--bg3); border: 1px solid var(--border);
+    color: var(--text); font-family: var(--mono); font-size: 13px;
+    padding: 7px 10px; border-radius: 2px; outline: none;
+    transition: border-color .2s;
+    -moz-appearance: textfield;
+  }
+  input[type=number]::-webkit-outer-spin-button,
+  input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+  input[type=number]:focus, select:focus { border-color: var(--gold); }
+  select { cursor: pointer; }
+  .input-unit { font-family: var(--mono); font-size: 10px; color: var(--text3); }
+  .input-w80 { width: 80px; }
+  .input-w120 { width: 120px; }
+  .input-w160 { width: 160px; }
+
+  /* STATS ROW */
+  .stats-row { display: flex; gap: 0; margin-top: 12px; border-top: 1px solid var(--border); }
+  .stat {
+    flex: 1; padding: 10px 12px;
+    border-right: 1px solid var(--border);
+  }
+  .stat:last-child { border-right: none; }
+  .stat-label { font-family: var(--mono); font-size: 9px; color: var(--text3); letter-spacing: .08em; text-transform: uppercase; }
+  .stat-val { font-family: var(--mono); font-size: 15px; color: var(--text); margin-top: 3px; font-weight: 700; }
+  .stat-val.warn { color: var(--amber); }
+  .stat-val.danger { color: var(--red); }
+  .spread-warn {
+    font-family: var(--mono); font-size: 10px; color: var(--red);
+    background: var(--red-dim); border: 1px solid rgba(239,68,68,0.2);
+    padding: 6px 10px; margin-top: 10px; display: none;
+    letter-spacing: .02em; line-height: 1.5;
+  }
+
+  /* CANDLE SECTION */
+  .candle-vis { display: flex; gap: 20px; align-items: flex-end; justify-content: center; padding: 14px 0; }
+  .candle-item { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .candle-item svg { overflow: visible; }
+  .candle-label { font-family: var(--mono); font-size: 9px; color: var(--text3); letter-spacing: .04em; }
+  .select-row { display: flex; gap: 8px; }
+  .select-row select { flex: 1; }
+  .mode-suggestion {
+    margin-top: 10px; padding: 10px 12px;
+    background: var(--bg3); border-left: 2px solid var(--gold);
+    font-size: 12px; color: var(--text2); line-height: 1.6;
+    font-family: var(--mono); letter-spacing: .02em;
+  }
+  .mode-suggestion span { color: var(--gold); font-weight: 700; }
+
+  /* MODE BUTTONS */
+  .mode-btns { display: flex; gap: 8px; margin-top: 10px; }
+  .mode-btn {
+    flex: 1; padding: 9px 6px;
+    background: var(--bg3); border: 1px solid var(--border);
+    color: var(--text2); font-family: var(--mono); font-size: 11px;
+    cursor: pointer; border-radius: 2px; letter-spacing: .06em;
+    text-transform: uppercase; transition: all .15s;
+  }
+  .mode-btn:hover { border-color: var(--border2); color: var(--text); }
+  .mode-btn.active { background: var(--gold-dim); border-color: var(--gold); color: var(--gold); }
+  .mode-btn.suggest { background: rgba(240,180,41,0.07); border-color: rgba(240,180,41,0.4); color: var(--amber); animation: pulse-border 1.5s ease-in-out infinite; }
+  @keyframes pulse-border { 0%,100%{border-color:rgba(240,180,41,0.4)} 50%{border-color:var(--gold)} }
+
+  /* LEVELS */
+  .levels-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .level-card {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 2px; padding: 10px 12px;
+  }
+  .level-lbl { font-family: var(--mono); font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; }
+  .level-val { font-family: var(--mono); font-size: 18px; font-weight: 700; margin-top: 4px; color: var(--text); }
+  .level-val.green { color: var(--green); }
+  .level-val.red { color: var(--red); }
+  .level-val.gold { color: var(--gold); }
+  .level-sub { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-top: 2px; }
+
+  /* RR BAR */
+  .rr-section { margin-top: 12px; }
+  .rr-labels { display: flex; justify-content: space-between; margin-bottom: 5px; }
+  .rr-label-txt { font-family: var(--mono); font-size: 10px; color: var(--text3); }
+  .rr-track { height: 4px; background: var(--bg3); border-radius: 0; position: relative; overflow: visible; }
+  .rr-fill { height: 4px; background: var(--gold); transition: width .4s cubic-bezier(.4,0,.2,1); position: relative; }
+  .rr-fill::after { content: ''; position: absolute; right: -1px; top: -3px; width: 10px; height: 10px; background: var(--gold); border-radius: 50%; }
+  .rr-min-line { position: absolute; left: 50%; top: -4px; width: 1px; height: 12px; background: var(--border2); }
+  .rr-min-label { position: absolute; left: 50%; top: 10px; transform: translateX(-50%); font-family: var(--mono); font-size: 9px; color: var(--text3); white-space: nowrap; }
+
+  /* MTF PANEL */
+  .mtf-bars { display: flex; flex-direction: column; gap: 0; }
+  .mtf-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 0; border-bottom: 1px solid var(--border);
+  }
+  .mtf-row:last-child { border-bottom: none; }
+  .mtf-tf { font-family: var(--mono); font-size: 11px; color: var(--text2); min-width: 32px; }
+  .mtf-select { background: transparent; border: none; color: var(--text2); font-family: var(--mono); font-size: 11px; cursor: pointer; outline: none; }
+  .mtf-select option { background: var(--bg3); }
+  .mtf-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--text3); transition: all .2s; flex-shrink: 0;
+    margin-left: 8px;
+  }
+  .mtf-dot.bull { background: var(--green); box-shadow: 0 0 6px rgba(34,197,94,0.5); }
+  .mtf-dot.bear { background: var(--red); box-shadow: 0 0 6px rgba(239,68,68,0.5); }
+  .mtf-dot.neut { background: var(--text3); }
+  .mtf-score {
+    margin-top: 12px; padding: 10px 12px;
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 2px;
+  }
+  .mtf-score-label { font-family: var(--mono); font-size: 9px; color: var(--text3); letter-spacing: .08em; text-transform: uppercase; }
+  .mtf-score-val { font-family: var(--mono); font-size: 14px; font-weight: 700; margin-top: 4px; color: var(--text); }
+  .mtf-advice { font-family: var(--mono); font-size: 10px; color: var(--text2); margin-top: 4px; line-height: 1.5; }
+
+  /* CHECKLIST */
+  .checklist { display: flex; flex-direction: column; gap: 6px; }
+  .check-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px; background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 2px; cursor: pointer; transition: all .15s;
+  }
+  .check-item:hover { border-color: var(--border2); }
+  .check-item.done { border-color: rgba(34,197,94,0.2); background: rgba(34,197,94,0.04); }
+  .check-box {
+    width: 14px; height: 14px; border: 1px solid var(--border2);
+    border-radius: 2px; flex-shrink: 0; display: flex;
+    align-items: center; justify-content: center; transition: all .15s;
+  }
+  .check-item.done .check-box { background: var(--green); border-color: var(--green); }
+  .check-tick { display: none; width: 8px; height: 6px; }
+  .check-tick path { stroke: #000; stroke-width: 1.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  .check-item.done .check-tick { display: block; }
+  .check-item input[type=checkbox] { display: none; }
+  .check-text { font-family: var(--mono); font-size: 11px; color: var(--text2); letter-spacing: .02em; line-height: 1.4; }
+  .check-item.done .check-text { color: var(--text3); }
+
+  /* TRADE BUTTON */
+  .trade-btn {
+    width: 100%; margin-top: 12px; padding: 13px;
+    background: var(--bg3); border: 1px solid var(--border);
+    color: var(--text3); font-family: var(--mono); font-size: 12px;
+    cursor: not-allowed; letter-spacing: .08em; text-transform: uppercase;
+    border-radius: 2px; transition: all .2s;
+  }
+  .trade-btn.ready {
+    background: var(--gold-dim); border-color: var(--gold);
+    color: var(--gold); cursor: pointer;
+    animation: glow-btn 2s ease-in-out infinite;
+  }
+  @keyframes glow-btn { 0%,100%{box-shadow:0 0 0 0 var(--gold-glow)} 50%{box-shadow:0 0 16px 2px var(--gold-glow)} }
+  .trade-btn.ready:hover { background: rgba(240,180,41,0.2); }
+
+  /* SESSION */
+  .session-card {
+    padding: 12px 16px; background: var(--bg3);
+    border: 1px solid var(--border); border-radius: 2px;
+  }
+  .session-name { font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--text2); }
+  .session-name.active { color: var(--green); }
+  .session-times { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-top: 4px; }
+
+  /* NOTES */
+  .notes-label { font-family: var(--mono); font-size: 9px; color: var(--text3); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 6px; }
+  .notes-box {
+    width: 100%; min-height: 80px; background: var(--bg3);
+    border: 1px solid var(--border); color: var(--text2);
+    font-family: var(--mono); font-size: 11px; padding: 8px 10px;
+    border-radius: 2px; resize: vertical; outline: none; line-height: 1.6;
+  }
+  .notes-box:focus { border-color: var(--border2); }
+
+  /* DIVIDER */
+  hr { border: none; border-top: 1px solid var(--border); margin: 10px 0; }
+
+  /* TICKER */
+  .ticker-section { display: flex; align-items: center; gap: 8px; }
+  #tickerPrice { font-family: var(--mono); font-size: 28px; font-weight: 700; color: var(--gold); letter-spacing: .02em; }
+  .ticker-label { font-family: var(--mono); font-size: 10px; color: var(--text3); }
+  .price-input-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+  .price-input-row input { width: 140px; }
+
+  /* RISK METER */
+  .risk-meter { margin-top: 8px; }
+  .risk-label-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
+  .risk-label-txt { font-family: var(--mono); font-size: 10px; color: var(--text3); }
+  .risk-track { height: 3px; background: var(--bg3); border-radius: 0; }
+  .risk-fill { height: 3px; background: linear-gradient(90deg, var(--green), var(--amber), var(--red)); border-radius: 0; transition: width .3s; }
+
+  /* RESPONSIVE */
+  @media (max-width: 1000px) {
+    .grid { grid-template-columns: 1fr 1fr; }
+    .col:last-child { grid-column: 1 / -1; flex-direction: row; flex-wrap: wrap; }
+    .col:last-child .panel { flex: 1; min-width: 200px; }
+  }
+  @media (max-width: 640px) {
+    .grid { grid-template-columns: 1fr; }
+    .col:last-child { flex-direction: column; }
+    .levels-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-mark">XAU</div>
+    <div>
+      <div class="logo-text">Box Strategy</div>
+      <div class="logo-sub">XAUUSD · Scalping Dashboard</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div id="sessionBadge">— SESSION —</div>
+    <div id="clockEl">00:00:00 UTC</div>
+  </div>
+</header>
+
+<div class="container">
+<div class="grid">
+
+<!-- COL 1 -->
+<div class="col">
+
+  <div class="panel">
+    <div class="panel-head">
+      <span class="panel-title">01 · Price & Box Setup</span>
+      <span class="panel-tag">XAUUSD</span>
+    </div>
+    <div class="panel-body">
+      <div class="ticker-section">
+        <div>
+          <div class="ticker-label">Box High</div>
+          <input type="number" id="bHigh" class="input-w160" value="3320.00" step="0.01" oninput="calc()" placeholder="e.g. 3320.00">
+        </div>
+        <div style="margin-top:18px;color:var(--text3);font-family:var(--mono)">↕</div>
+        <div>
+          <div class="ticker-label">Box Low</div>
+          <input type="number" id="bLow" class="input-w160" value="3315.00" step="0.01" oninput="calc()" placeholder="e.g. 3315.00">
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;margin-top:12px;">
+        <div>
+          <div class="ticker-label">Spread (points)</div>
+          <input type="number" id="spread" class="input-w80" value="25" step="1" min="1" oninput="calc()">
+        </div>
+        <div>
+          <div class="ticker-label">Account (USD)</div>
+          <input type="number" id="acct" class="input-w80" value="20" step="1" oninput="calc()">
+        </div>
+        <div>
+          <div class="ticker-label">Risk %</div>
+          <input type="number" id="riskPct" class="input-w80" value="1" step="0.1" min="0.1" max="5" oninput="calc()">
+        </div>
+      </div>
+      <div id="spreadWarn" class="spread-warn">
+        ⚠ Spread exceeds 30% of box range — box is too tight. Widen your box or wait for a quieter spread.
+      </div>
+      <div class="stats-row">
+        <div class="stat">
+          <div class="stat-label">Range (pts)</div>
+          <div class="stat-val" id="sRange">—</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Range (pips)</div>
+          <div class="stat-val" id="sRangePips">—</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Spread cost</div>
+          <div class="stat-val" id="sSpread">—</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Risk $</div>
+          <div class="stat-val gold" id="sRiskDollar">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <span class="panel-title">02 · Candle Character</span>
+      <span class="panel-tag" id="dirTag">—</span>
+    </div>
+    <div class="panel-body">
+      <div class="candle-vis">
+        <div class="candle-item">
+          <svg width="28" height="60" viewBox="0 0 28 60">
+            <line x1="14" y1="2" x2="14" y2="10" stroke="#4a4e63" stroke-width="1.5"/>
+            <rect x="6" y="10" width="16" height="38" fill="#22c55e" rx="1"/>
+            <line x1="14" y1="48" x2="14" y2="56" stroke="#4a4e63" stroke-width="1.5"/>
+          </svg>
+          <div class="candle-label">BULL</div>
+        </div>
+        <div class="candle-item">
+          <svg width="28" height="60" viewBox="0 0 28 60">
+            <line x1="14" y1="2" x2="14" y2="22" stroke="#4a4e63" stroke-width="1.5"/>
+            <rect x="6" y="22" width="16" height="12" fill="#4a4e63" rx="1"/>
+            <line x1="14" y1="34" x2="14" y2="56" stroke="#4a4e63" stroke-width="1.5"/>
+          </svg>
+          <div class="candle-label">DOJI</div>
+        </div>
+        <div class="candle-item">
+          <svg width="28" height="60" viewBox="0 0 28 60">
+            <line x1="14" y1="2" x2="14" y2="10" stroke="#4a4e63" stroke-width="1.5"/>
+            <rect x="6" y="10" width="16" height="38" fill="#ef4444" rx="1"/>
+            <line x1="14" y1="48" x2="14" y2="56" stroke="#4a4e63" stroke-width="1.5"/>
+          </svg>
+          <div class="candle-label">BEAR</div>
+        </div>
+        <div class="candle-item">
+          <svg width="28" height="60" viewBox="0 0 28 60">
+            <line x1="14" y1="2" x2="14" y2="40" stroke="#4a4e63" stroke-width="1.5"/>
+            <rect x="6" y="40" width="16" height="10" fill="#22c55e" rx="1"/>
+            <line x1="14" y1="50" x2="14" y2="54" stroke="#4a4e63" stroke-width="1.5"/>
+          </svg>
+          <div class="candle-label">PIN↑</div>
+        </div>
+        <div class="candle-item">
+          <svg width="28" height="60" viewBox="0 0 28 60">
+            <line x1="14" y1="6" x2="14" y2="10" stroke="#4a4e63" stroke-width="1.5"/>
+            <rect x="6" y="10" width="16" height="10" fill="#ef4444" rx="1"/>
+            <line x1="14" y1="20" x2="14" y2="56" stroke="#4a4e63" stroke-width="1.5"/>
+          </svg>
+          <div class="candle-label">PIN↓</div>
+        </div>
+      </div>
+      <div class="select-row">
+        <select id="cBody" onchange="readCandle()">
+          <option value="big_bull">Big bullish body</option>
+          <option value="big_bear">Big bearish body</option>
+          <option value="small">Small body (indecision)</option>
+          <option value="pin_bull">Pin bar — long lower wick</option>
+          <option value="pin_bear">Pin bar — long upper wick</option>
+          <option value="engulf_bull">Engulfing bullish</option>
+          <option value="engulf_bear">Engulfing bearish</option>
+        </select>
+        <select id="cPos" onchange="readCandle()">
+          <option value="top">At box top</option>
+          <option value="bottom">At box bottom</option>
+          <option value="mid">Mid-box</option>
+          <option value="break_up">Breaking above box</option>
+          <option value="break_down">Breaking below box</option>
+        </select>
+      </div>
+      <div class="mode-suggestion" id="modeDesc">
+        <span>—</span> Select candle character above
+      </div>
+      <div class="mode-btns">
+        <button class="mode-btn" id="mBreak" onclick="setMode('breakout')">Breakout</button>
+        <button class="mode-btn" id="mRetest" onclick="setMode('retest')">Retest</button>
+        <button class="mode-btn" id="mRev" onclick="setMode('reversal')">Reversal</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end col1 -->
+
+<!-- COL 2 -->
+<div class="col">
+
+  <div class="panel">
+    <div class="panel-head">
+      <span class="panel-title">03 · Trade Levels</span>
+      <span class="panel-tag" id="modeTag">—</span>
+    </div>
+    <div class="panel-body">
+      <div class="levels-grid">
+        <div class="level-card">
+          <div class="level-lbl">Entry</div>
+          <div class="level-val gold" id="lEntry">—</div>
+          <div class="level-sub" id="lDir">—</div>
+        </div>
+        <div class="level-card">
+          <div class="level-lbl">Stop Loss</div>
+          <div class="level-val red" id="lSL">—</div>
+          <div class="level-sub" id="lSLPips">— pips (incl. spread)</div>
+        </div>
+        <div class="level-card">
+          <div class="level-lbl">TP 1 (1.5R)</div>
+          <div class="level-val green" id="lTP1">—</div>
+          <div class="level-sub" id="lTP1Pips">—</div>
+        </div>
+        <div class="level-card">
+          <div class="level-lbl">TP 2 (2.5R)</div>
+          <div class="level-val green" id="lTP2">—</div>
+          <div class="level-sub" id="lTP2Pips">—</div>
+        </div>
+        <div class="level-card">
+          <div class="level-lbl">Risk Amount</div>
+          <div class="level-val" id="lRisk">—</div>
+          <div class="level-sub" id="lRiskPct">—% of account</div>
+        </div>
+        <div class="level-card">
+          <div class="level-lbl">Lot Size</div>
+          <div class="level-val gold" id="lLot">—</div>
+          <div class="level-sub">micro lots (0.001 min)</div>
+        </div>
+      </div>
+      <div class="rr-section">
+        <div class="rr-labels">
+          <span class="rr-label-txt">R:R ratio</span>
+          <span class="rr-label-txt" id="rrVal">—</span>
+        </div>
+        <div class="rr-track">
+          <div class="rr-fill" id="rrFill" style="width:0%"></div>
+          <div class="rr-min-line"></div>
+          <div class="rr-min-label">1.5 min</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <span class="panel-title">04 · Pre-Trade Checklist</span>
+      <span class="panel-tag" id="checkCount">0/6</span>
+    </div>
+    <div class="panel-body">
+      <div class="checklist" id="checklist">
+        <div class="check-item" onclick="toggleCheck(this)">
+          <input type="checkbox">
+          <div class="check-box"><svg class="check-tick" viewBox="0 0 8 6"><path d="M1 3L3 5L7 1"/></svg></div>
+          <span class="check-text">HTF bias set (H1/H4 checked on MT5)</span>
+        </div>
+        <div class="check-item" onclick="toggleCheck(this)">
+          <input type="checkbox">
+          <div class="check-box"><svg class="check-tick" viewBox="0 0 8 6"><path d="M1 3L3 5L7 1"/></svg></div>
+          <span class="check-text">Box high & low clearly marked on chart</span>
+        </div>
+        <div class="check-item" onclick="toggleCheck(this)">
+          <input type="checkbox">
+          <div class="check-box"><svg class="check-tick" viewBox="0 0 8 6"><path d="M1 3L3 5L7 1"/></svg></div>
+          <span class="check-text">Spread checked — not widening on broker</span>
+        </div>
+        <div class="check-item" onclick="toggleCheck(this)">
+          <input type="checkbox">
+          <div class="check-box"><svg class="check-tick" viewBox="0 0 8 6"><path d="M1 3L3 5L7 1"/></svg></div>
+          <span class="check-text">No major news in next 30 min (NFP/CPI/Fed)</span>
+        </div>
+        <div class="check-item" onclick="toggleCheck(this)">
+          <input type="checkbox">
+          <div class="check-box"><svg class="check-tick" viewBox="0 0 8 6"><path d="M1 3L3 5L7 1"/></svg></div>
+          <span class="check-text">London or NY session is active</span>
+        </div>
+        <div class="check-item" onclick="toggleCheck(this)">
+          <input type="checkbox">
+          <div class="check-box"><svg class="check-tick" viewBox="0 0 8 6"><path d="M1 3L3 5L7 1"/></svg></div>
+          <span class="check-text">SL placed beyond spread + buffer confirmed</span>
+        </div>
+      </div>
+      <button class="trade-btn" id="tradeBtn" disabled>COMPLETE CHECKLIST TO UNLOCK</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><span class="panel-title">05 · Trade Notes</span></div>
+    <div class="panel-body">
+      <div class="notes-label">Session log</div>
+      <textarea class="notes-box" placeholder="e.g. Asian box 3315–3320. London break up with big bull. Entered long at 3320.25. SL 3314.50. Watching TP1..."></textarea>
+    </div>
+  </div>
+
+</div><!-- end col2 -->
+
+<!-- COL 3: SIDE PANEL -->
+<div class="col">
+
+  <div class="panel">
+    <div class="panel-head"><span class="panel-title">MTF Bias</span></div>
+    <div class="panel-body" style="padding:8px 14px">
+      <div class="mtf-bars">
+        <div class="mtf-row">
+          <span class="mtf-tf">H4</span>
+          <select class="mtf-select" onchange="setMTF('h4',this.value)">
+            <option value="n">Neutral</option>
+            <option value="b">Bullish</option>
+            <option value="d">Bearish</option>
+          </select>
+          <div class="mtf-dot neut" id="dot-h4"></div>
+        </div>
+        <div class="mtf-row">
+          <span class="mtf-tf">H1</span>
+          <select class="mtf-select" onchange="setMTF('h1',this.value)">
+            <option value="n">Neutral</option>
+            <option value="b">Bullish</option>
+            <option value="d">Bearish</option>
+          </select>
+          <div class="mtf-dot neut" id="dot-h1"></div>
+        </div>
+        <div class="mtf-row">
+          <span class="mtf-tf">M15</span>
+          <select class="mtf-select" onchange="setMTF('m15',this.value)">
+            <option value="n">Neutral</option>
+            <option value="b">Bullish</option>
+            <option value="d">Bearish</option>
+          </select>
+          <div class="mtf-dot neut" id="dot-m15"></div>
+        </div>
+        <div class="mtf-row">
+          <span class="mtf-tf">M5</span>
+          <select class="mtf-select" onchange="setMTF('m5',this.value)">
+            <option value="n">Neutral</option>
+            <option value="b">Bullish</option>
+            <option value="d">Bearish</option>
+          </select>
+          <div class="mtf-dot neut" id="dot-m5"></div>
+        </div>
+        <div class="mtf-row">
+          <span class="mtf-tf">M1</span>
+          <select class="mtf-select" onchange="setMTF('m1',this.value)">
+            <option value="n">Neutral</option>
+            <option value="b">Bullish</option>
+            <option value="d">Bearish</option>
+          </select>
+          <div class="mtf-dot neut" id="dot-m1"></div>
+        </div>
+      </div>
+      <div class="mtf-score">
+        <div class="mtf-score-label">Overall bias</div>
+        <div class="mtf-score-val" id="mtfScoreVal">—</div>
+        <div class="mtf-advice" id="mtfAdvice">Set timeframe biases above</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><span class="panel-title">Sessions (UTC)</span></div>
+    <div class="panel-body" style="display:flex;flex-direction:column;gap:6px">
+      <div class="session-card" id="sess-asia">
+        <div class="session-name">Asia</div>
+        <div class="session-times">00:00 – 08:00 UTC</div>
+      </div>
+      <div class="session-card" id="sess-london">
+        <div class="session-name">London open</div>
+        <div class="session-times">08:00 – 10:00 UTC · Best</div>
+      </div>
+      <div class="session-card" id="sess-ny">
+        <div class="session-name">NY open</div>
+        <div class="session-times">13:30 – 15:00 UTC · Best</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><span class="panel-title">MT5 Tips</span></div>
+    <div class="panel-body" style="display:flex;flex-direction:column;gap:8px">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--text2);line-height:1.7;border-left:2px solid var(--border2);padding-left:10px">
+        Tick volume = bar activity, not real size. Use candle shape instead.
+      </div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--text2);line-height:1.7;border-left:2px solid var(--border2);padding-left:10px">
+        Min lot on MT5 = 0.01. For micro, broker must allow 0.001.
+      </div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--text2);line-height:1.7;border-left:2px solid var(--border2);padding-left:10px">
+        Spread widens during news & thin sessions. Always check before entry.
+      </div>
+      <div style="font-family:var(--mono);font-size:10px;color:var(--text2);line-height:1.7;border-left:2px solid var(--border2);padding-left:10px">
+        With $20 at 1:1000, your effective capital is $20,000. Still risk 1% = $0.20 max per trade.
+      </div>
+    </div>
+  </div>
+
+</div><!-- end col3 -->
+</div><!-- end grid -->
+</div><!-- end container -->
+
+<script>
+// STATE
+let currentMode = 'breakout';
+let dir = 'long';
+const mtfState = {h4:'n',h1:'n',m15:'n',m5:'n',m1:'n'};
+
+// CLOCK + SESSION
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getUTCHours()).padStart(2,'0');
+  const m = String(now.getUTCMinutes()).padStart(2,'0');
+  const s = String(now.getUTCSeconds()).padStart(2,'0');
+  document.getElementById('clockEl').textContent = h+':'+m+':'+s+' UTC';
+
+  const t = now.getUTCHours()*60+now.getUTCMinutes();
+  let sessName='', active=false;
+  const badge = document.getElementById('sessionBadge');
+
+  document.querySelectorAll('.session-card').forEach(c=>c.querySelector('.session-name').className='session-name');
+
+  if(t>=480&&t<600){sessName='LONDON OPEN · ACTIVE';active=true;document.getElementById('sess-london').querySelector('.session-name').className='session-name active';}
+  else if(t>=810&&t<900){sessName='NY OPEN · ACTIVE';active=true;document.getElementById('sess-ny').querySelector('.session-name').className='session-name active';}
+  else if(t>=600&&t<810){sessName='LONDON SESSION';}
+  else if(t>=900&&t<1200){sessName='NY SESSION';}
+  else if(t>=0&&t<480){sessName='ASIA SESSION';document.getElementById('sess-asia').querySelector('.session-name').className='session-name active';}
+  else{sessName='OFF PEAK';}
+
+  badge.textContent = sessName;
+  badge.className = active ? 'active' : '';
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// MTF
+function setMTF(tf, val) {
+  mtfState[tf] = val;
+  const dot = document.getElementById('dot-'+tf);
+  dot.className = 'mtf-dot ' + (val==='b'?'bull':val==='d'?'bear':'neut');
+  scoreMTF();
+}
+
+function scoreMTF() {
+  const vals = Object.values(mtfState);
+  const bulls = vals.filter(v=>v==='b').length;
+  const bears = vals.filter(v=>v==='d').length;
+  const sv = document.getElementById('mtfScoreVal');
+  const sa = document.getElementById('mtfAdvice');
+  if(bulls>=4){sv.textContent='Strong Bullish';sv.style.color='var(--green)';sa.textContent='Prefer long entries. Avoid short reversals.';}
+  else if(bears>=4){sv.textContent='Strong Bearish';sv.style.color='var(--red)';sa.textContent='Prefer short entries. Avoid long reversals.';}
+  else if(bulls>=3){sv.textContent='Mild Bullish';sv.style.color='var(--green)';sa.textContent='Lean long. Reversal shorts are lower quality.';}
+  else if(bears>=3){sv.textContent='Mild Bearish';sv.style.color='var(--red)';sa.textContent='Lean short. Reversal longs are lower quality.';}
+  else{sv.textContent='Mixed / Neutral';sv.style.color='var(--text2)';sa.textContent='Wait for clarity or trade reversals inside box only.';}
+}
+
+// CANDLE
+function readCandle() {
+  const body = document.getElementById('cBody').value;
+  const pos = document.getElementById('cPos').value;
+  const desc = document.getElementById('modeDesc');
+  let suggest=null, txt='';
+
+  if(pos==='break_up'&&(body==='big_bull'||body==='engulf_bull')){suggest='breakout';dir='long';txt='<span>BREAKOUT LONG</span> — Strong bullish close above box. Enter on this candle close or next bar open.';}
+  else if(pos==='break_down'&&(body==='big_bear'||body==='engulf_bear')){suggest='breakout';dir='short';txt='<span>BREAKOUT SHORT</span> — Strong bearish close below box. Enter on close.';}
+  else if(pos==='break_up'&&body==='small'){suggest='retest';dir='long';txt='<span>WAIT FOR RETEST</span> — Weak close above. Let price pull back to box top, then long on retest.';}
+  else if(pos==='break_down'&&body==='small'){suggest='retest';dir='short';txt='<span>WAIT FOR RETEST</span> — Weak break below. Wait for retest of box bottom before shorting.';}
+  else if(pos==='top'&&(body==='pin_bear'||body==='engulf_bear')){suggest='reversal';dir='short';txt='<span>REVERSAL SHORT</span> — Rejection at box top. Fade the high, SL above the wick.';}
+  else if(pos==='bottom'&&(body==='pin_bull'||body==='engulf_bull')){suggest='reversal';dir='long';txt='<span>REVERSAL LONG</span> — Rejection at box bottom. Fade the low, SL below the wick.';}
+  else if(pos==='top'&&body==='big_bull'){suggest='breakout';dir='long';txt='<span>WATCH BREAKOUT</span> — Big bull pushing box top. Wait for confirmed close above.';}
+  else if(pos==='bottom'&&body==='big_bear'){suggest='breakout';dir='short';txt='<span>WATCH BREAKOUT</span> — Big bear pushing box bottom. Wait for confirmed close below.';}
+  else if(pos==='mid'||body==='small'){suggest=null;txt='<span style="color:var(--text3)">NO TRADE</span> — Indecision mid-box. Wait for price to reach a box edge.'}
+  else{suggest=null;txt='<span style="color:var(--text3)">WAIT</span> — Mixed signal. Need a cleaner candle at a box edge.';}
+
+  desc.innerHTML = txt;
+  const dirTag = document.getElementById('dirTag');
+  dirTag.textContent = dir==='long'?'LONG':'SHORT';
+  dirTag.style.color = dir==='long'?'var(--green)':'var(--red)';
+  dirTag.style.borderColor = dir==='long'?'rgba(34,197,94,0.3)':'rgba(239,68,68,0.3)';
+
+  ['mBreak','mRetest','mRev'].forEach(id=>document.getElementById(id).className='mode-btn');
+  const map={breakout:'mBreak',retest:'mRetest',reversal:'mRev'};
+  if(suggest){document.getElementById(map[suggest]).className='mode-btn suggest';setMode(suggest,true);}
+  calc();
+}
+
+function setMode(m, fromCandle) {
+  currentMode = m;
+  if(!fromCandle){
+    ['mBreak','mRetest','mRev'].forEach(id=>document.getElementById(id).className='mode-btn');
+    const map={breakout:'mBreak',retest:'mRetest',reversal:'mRev'};
+    document.getElementById(map[m]).className='mode-btn active';
+  }
+  document.getElementById('modeTag').textContent = m.toUpperCase();
+  calc();
+}
+
+// CALC
+function calc() {
+  const hi = parseFloat(document.getElementById('bHigh').value)||0;
+  const lo = parseFloat(document.getElementById('bLow').value)||0;
+  const sp = parseFloat(document.getElementById('spread').value)||25;
+  const acct = parseFloat(document.getElementById('acct').value)||20;
+  const riskPct = parseFloat(document.getElementById('riskPct').value)||1;
+  if(hi<=lo||hi===0||lo===0) return;
+
+  const spPips = sp/10;
+  const rangePts = hi - lo;
+  const rangePips = rangePts * 10;
+  const spreadPct = (spPips / rangePips * 100);
+  const riskDollar = acct * riskPct / 100;
+
+  document.getElementById('sRange').textContent = rangePts.toFixed(2);
+  document.getElementById('sRangePips').textContent = rangePips.toFixed(1);
+  document.getElementById('sSpread').textContent = spPips.toFixed(1)+'p ('+Math.round(spreadPct)+'%)';
+  document.getElementById('sRiskDollar').textContent = '$'+riskDollar.toFixed(2);
+  document.getElementById('spreadWarn').style.display = spreadPct > 30 ? 'block' : 'none';
+  document.getElementById('sSpread').className = 'stat-val' + (spreadPct>30?' danger':spreadPct>20?' warn':'');
+
+  let entry, sl, slPips, mult;
+  if(currentMode==='breakout'){
+    if(dir==='long'){entry=hi+(spPips/10);sl=lo-(spPips/10);}
+    else{entry=lo-(spPips/10);sl=hi+(spPips/10);}
+    slPips=Math.abs(entry-sl)*10; mult=1.5;
+  } else if(currentMode==='retest'){
+    if(dir==='long'){entry=hi;sl=hi-(spPips/10)-0.5;}
+    else{entry=lo;sl=lo+(spPips/10)+0.5;}
+    slPips=Math.abs(entry-sl)*10+spPips; mult=2.5;
+  } else {
+    if(dir==='long'){entry=lo+(spPips/10);sl=lo-(spPips/10)-0.3;}
+    else{entry=hi-(spPips/10);sl=hi+(spPips/10)+0.3;}
+    slPips=Math.abs(entry-sl)*10+spPips; mult=2.0;
+  }
+
+  const lot = Math.max(Math.min(riskDollar/(slPips*1.0),0.1),0.001);
+  const tp1 = dir==='long'?entry+(slPips*1.5/10):entry-(slPips*1.5/10);
+  const tp2 = dir==='long'?entry+(slPips*2.5/10):entry-(slPips*2.5/10);
+  const rrPct = Math.min((mult/3)*100,100);
+
+  document.getElementById('lEntry').textContent = entry.toFixed(2);
+  document.getElementById('lDir').textContent = dir==='long'?'▲ LONG':'▼ SHORT';
+  document.getElementById('lSL').textContent = sl.toFixed(2);
+  document.getElementById('lSLPips').textContent = slPips.toFixed(1)+' pips (incl. spread)';
+  document.getElementById('lTP1').textContent = tp1.toFixed(2);
+  document.getElementById('lTP1Pips').textContent = (slPips*1.5).toFixed(1)+' pips from entry';
+  document.getElementById('lTP2').textContent = tp2.toFixed(2);
+  document.getElementById('lTP2Pips').textContent = (slPips*2.5).toFixed(1)+' pips from entry';
+  document.getElementById('lRisk').textContent = '$'+riskDollar.toFixed(2);
+  document.getElementById('lRiskPct').textContent = riskPct+'% of $'+acct;
+  document.getElementById('lLot').textContent = lot.toFixed(3);
+  document.getElementById('rrFill').style.width = rrPct+'%';
+  document.getElementById('rrVal').textContent = mult+':1';
+}
+
+// CHECKLIST
+function toggleCheck(el) {
+  el.classList.toggle('done');
+  const cb = el.querySelector('input[type=checkbox]');
+  cb.checked = el.classList.contains('done');
+  updateCheckCount();
+}
+
+function updateCheckCount() {
+  const all = document.querySelectorAll('.check-item');
+  const done = document.querySelectorAll('.check-item.done').length;
+  document.getElementById('checkCount').textContent = done+'/'+all.length;
+  const btn = document.getElementById('tradeBtn');
+  const ready = done===all.length;
+  btn.disabled = !ready;
+  btn.className = ready ? 'trade-btn ready' : 'trade-btn';
+  btn.textContent = ready ? '▸ ALL CHECKS PASSED — TRADE READY' : 'COMPLETE CHECKLIST TO UNLOCK';
+}
+
+// INIT
+setMode('breakout');
+readCandle();
+calc();
+</script>
+</body>
+</html>
