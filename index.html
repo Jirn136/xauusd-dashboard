@@ -238,14 +238,14 @@ hr{border:none;border-top:1px solid var(--border);margin:9px 0}
     </div>
     <div class="panel-body">
       <div class="ig">
-        <div><label class="flabel">Box High</label><input type="number" id="bHigh" value="3320.00" step="0.01" oninput="onBoxChange()"></div>
-        <div><label class="flabel">Box Low</label><input type="number" id="bLow" value="3315.00" step="0.01" oninput="onBoxChange()"></div>
+        <div><label class="flabel">Zone High (resistance)</label><input type="number" id="bHigh" value="3320.00" step="0.01" oninput="onBoxChange()"></div>
+        <div><label class="flabel">Zone Low (support)</label><input type="number" id="bLow" value="3315.00" step="0.01" oninput="onBoxChange()"></div>
         <div><label class="flabel">Spread (pts)</label><input type="number" id="spread" value="25" step="1" min="1" oninput="onBoxChange()"></div>
         <div><label class="flabel">Account (USD)</label><input type="number" id="acct" value="20" step="1" oninput="onBoxChange()"></div>
         <div><label class="flabel">Risk %</label><input type="number" id="riskPct" value="1" step="0.1" min="0.1" max="5" oninput="onBoxChange()"></div>
         <div><label class="flabel">Leverage</label><input type="number" id="leverage" value="1000" step="100" min="1" oninput="onBoxChange()"></div>
       </div>
-      <div id="spreadWarn" class="spread-warn">⚠ Spread exceeds 30% of box range — box too tight. Wait for a wider range.</div>
+      <div id="spreadWarn" class="spread-warn">⚠ Spread exceeds 30% of zone range — zone too tight. Wait for a wider consolidation.</div>
       <div class="stats-bar">
         <div class="sstat"><div class="sslabel">Range pts</div><div class="ssval" id="sRange">—</div></div>
         <div class="sstat"><div class="sslabel">Range pips</div><div class="ssval" id="sRangePips">—</div></div>
@@ -270,8 +270,8 @@ hr{border:none;border-top:1px solid var(--border);margin:9px 0}
           <div class="box-zone" id="cvBoxZone"></div>
           <div class="box-line" id="cvLineHi"></div>
           <div class="box-line" id="cvLineLo"></div>
-          <div class="box-lbl" id="cvLblHi">HIGH</div>
-          <div class="box-lbl" id="cvLblLo">LOW</div>
+          <div class="box-lbl" id="cvLblHi">RESIST</div>
+          <div class="box-lbl" id="cvLblLo">SUPPRT</div>
           <div class="brk-arrow" id="cvArrow"></div>
           <svg id="cvSVG" width="52" height="260" viewBox="0 0 52 260"></svg>
           <div class="cs-label" id="csLabel">SELECT CANDLE</div>
@@ -282,46 +282,44 @@ hr{border:none;border-top:1px solid var(--border);margin:9px 0}
         <div class="candle-ctrls">
           <div>
             <label class="flabel">Candle body</label>
-            <select id="cBody" onchange="readCandle()">
-              <option value="big_bull">Big bullish body</option>
-              <option value="big_bear">Big bearish body</option>
-              <option value="small">Small body (indecision)</option>
-              <option value="pin_bull">Pin bar — long lower wick</option>
-              <option value="pin_bear">Pin bar — long upper wick</option>
-              <option value="engulf_bull">Engulfing bullish</option>
-              <option value="engulf_bear">Engulfing bearish</option>
-            </select>
+            <div class="candle-body-grid" id="candleBodyGrid">
+              <!-- Will be populated with clickable candle body options -->
+            </div>
           </div>
           <div>
-            <label class="flabel">Position in box</label>
-            <select id="cPos" onchange="readCandle()">
-              <option value="top">At box top</option>
-              <option value="bottom">At box bottom</option>
-              <option value="mid">Mid-box</option>
-              <option value="break_up">Above box (breakout up)</option>
-              <option value="break_down">Below box (breakout down)</option>
-            </select>
+            <label class="flabel">Where did the candle close?</label>
+            <div class="position-grid" id="positionGrid">
+              <!-- Will be populated with clickable position options -->
+            </div>
           </div>
 
-          <!-- SUGGESTION — built with DOM, no innerHTML -->
+          <!-- SUGGESTION -->
           <div class="suggestion-box">
             <span class="sug-badge gold" id="sugBadge">—</span>
-            <span class="sug-text" id="sugText">Select candle character and position</span>
+            <span class="sug-text" id="sugText">Select candle body and close position</span>
           </div>
 
           <!-- SIGNALS -->
           <div class="signals">
             <div class="sig-row"><div class="sig-dot" id="sig1"></div><span id="sig1txt">Body strength</span></div>
-            <div class="sig-row"><div class="sig-dot" id="sig2"></div><span id="sig2txt">Edge position</span></div>
+            <div class="sig-row"><div class="sig-dot" id="sig2"></div><span id="sig2txt">Close position</span></div>
             <div class="sig-row"><div class="sig-dot" id="sig3"></div><span id="sig3txt">Setup quality</span></div>
           </div>
         </div>
       </div>
 
-      <div class="mode-btns">
-        <button class="mbtn" id="mBreak" onclick="setMode('breakout')">Breakout</button>
-        <button class="mbtn" id="mRetest" onclick="setMode('retest')">Retest</button>
-        <button class="mbtn" id="mRev" onclick="setMode('reversal')">Reversal</button>
+      <!-- AUTO MODE + PROBABILITY — no manual override -->
+      <div style="display:flex;gap:8px;margin-top:8px;align-items:stretch">
+        <div style="flex:1;padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:2px">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px">Auto-detected mode</div>
+          <div style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--gold)" id="autoModeDisplay">—</div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--text2);margin-top:2px" id="autoModeDir">Direction will auto-set</div>
+        </div>
+        <div style="flex:1;padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:2px">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px">Max probability</div>
+          <div style="font-family:var(--mono);font-size:14px;font-weight:700;" id="probDisplay" style="color:var(--text2)">—</div>
+          <div style="font-family:var(--mono);font-size:10px;color:var(--text2);margin-top:2px" id="probNote">—</div>
+        </div>
       </div>
     </div>
   </div>
@@ -615,19 +613,24 @@ function drawCandle(body, pos) {
 
   // candle shape offsets from anchor
   var col, bUp, bDn, wUp, wDn, pUp, pDn;
-  if(body==='big_bull'){       col='#22c55e'; bUp=-30; bDn=30; wUp=-42; wDn=38; }
-  else if(body==='big_bear'){  col='#ef4444'; bUp=-30; bDn=30; wUp=-38; wDn=42; }
-  else if(body==='small'){     col='#8b8fa8'; bUp=-6;  bDn=6;  wUp=-24; wDn=24; }
-  else if(body==='pin_bull'){  col='#22c55e'; bUp=-4;  bDn=6;  wUp=-12; wDn=42; }
-  else if(body==='pin_bear'){  col='#ef4444'; bUp=-6;  bDn=4;  wUp=-42; wDn=12; }
+  if(body==='big_bull'){        col='#22c55e'; bUp=-30; bDn=30; wUp=-42; wDn=38; }
+  else if(body==='big_bear'){   col='#ef4444'; bUp=-30; bDn=30; wUp=-38; wDn=42; }
+  else if(body==='doji'){       col='#8b8fa8'; bUp=-2;  bDn=2;  wUp=-30; wDn=30; }
+  else if(body==='doji_bull'){  col='#22c55e'; bUp=-2;  bDn=2;  wUp=-6;  wDn=40; }
+  else if(body==='doji_bear'){  col='#ef4444'; bUp=-2;  bDn=2;  wUp=-40; wDn=6;  }
+  else if(body==='small_bull'){ col='#22c55e'; bUp=-9;  bDn=9;  wUp=-20; wDn=18; }
+  else if(body==='small_bear'){ col='#ef4444'; bUp=-9;  bDn=9;  wUp=-18; wDn=20; }
+  else if(body==='pin_bull'){   col='#22c55e'; bUp=-4;  bDn=6;  wUp=-12; wDn=42; }
+  else if(body==='pin_bear'){   col='#ef4444'; bUp=-6;  bDn=4;  wUp=-42; wDn=12; }
   else if(body==='engulf_bull'){ col='#22c55e'; bUp=-28; bDn=28; wUp=-36; wDn=34; pUp=-10; pDn=15; }
   else if(body==='engulf_bear'){ col='#ef4444'; bUp=-28; bDn=28; wUp=-34; wDn=36; pUp=-15; pDn=10; }
+  else { col='#8b8fa8'; bUp=-6; bDn=6; wUp=-20; wDn=20; }
 
   // anchor position
   var anchor;
-  if(pos==='top'){        anchor = BOX_TOP + 18; }
-  else if(pos==='bottom'){ anchor = BOX_BOT - 18; }
-  else if(pos==='mid'){    anchor = BOX_MID; }
+  if(pos==='top'){          anchor = BOX_TOP + 18; }
+  else if(pos==='bottom'){  anchor = BOX_BOT - 18; }
+  else if(pos==='mid'){     anchor = BOX_MID; }
   else if(pos==='break_up'){
     anchor = BOX_TOP - 24;
     arrow.textContent = '↑'; arrow.style.top=(BOX_TOP-50)+'px'; arrow.style.color='var(--green)'; arrow.style.opacity='1';
@@ -636,6 +639,17 @@ function drawCandle(body, pos) {
     anchor = BOX_BOT + 24;
     arrow.textContent = '↓'; arrow.style.top=(BOX_BOT+16)+'px'; arrow.style.color='var(--red)'; arrow.style.opacity='1';
   }
+  else if(pos==='reclaim_up'){
+    // candle body spans from above box back down into box top area
+    anchor = BOX_TOP + 14;
+    arrow.textContent = '↩'; arrow.style.top=(BOX_TOP-46)+'px'; arrow.style.color='var(--amber)'; arrow.style.opacity='1';
+  }
+  else if(pos==='reclaim_down'){
+    // candle body spans from below box back up into box bottom area
+    anchor = BOX_BOT - 14;
+    arrow.textContent = '↪'; arrow.style.top=(BOX_BOT+14)+'px'; arrow.style.color='var(--amber)'; arrow.style.opacity='1';
+  }
+  else { anchor = BOX_MID; }
 
   var cx = 26;
   var clampW = function(v){ return Math.max(4, Math.min(SVG_H-4, v)); };
@@ -657,102 +671,174 @@ function drawCandle(body, pos) {
   svg.innerHTML = parts;
 }
 
-// ── CANDLE READER ──
+// ── CANDLE DECISION ENGINE ──
+//
+// Zone high = resistance (upper boundary of consolidation/tight squeeze)
+// Zone low  = support    (lower boundary of consolidation/tight squeeze)
+//
+// POSITION VALUES:
+//   top          = closed inside zone near resistance
+//   bottom       = closed inside zone near support
+//   mid          = closed mid-zone (no edge)
+//   break_up     = closed ABOVE resistance (genuine breakout candidate)
+//   break_down   = closed BELOW support (genuine breakdown candidate)
+//   reclaim_up   = broke above resistance but closed BACK INSIDE = false breakout
+//   reclaim_down = broke below support but closed BACK INSIDE = false breakdown
+//
+// FALSE BREAKDOWN (reclaim_down + bullish) = LONG:
+//   Price swept stops below support (liquidity grab), then a bullish body closed
+//   back above support. Smart money loaded longs below — this IS a long trade.
+//   Same logic in reverse for reclaim_up + bearish = SHORT.
+//
+// PROBABILITY RATINGS:
+//   75-85% A+ : False break reclaim with engulf/big body — stop hunt confirmed
+//   65-74% A  : Pin/doji rejection at zone edge
+//   55-64% B+ : Strong body breakout — momentum
+//   50-54% B  : Continuation / retest
+//   0%     —  : Indecision, mid-zone, watch-only
+//
 function readCandle() {
   var body = document.getElementById('cBody').value;
   var pos  = document.getElementById('cPos').value;
 
-  // infer direction
-  if(body==='big_bull'||body==='pin_bull'||body==='engulf_bull') tradeDir='long';
-  else if(body==='big_bear'||body==='pin_bear'||body==='engulf_bear') tradeDir='short';
-
-  var strong  = (body==='big_bull'||body==='big_bear'||body==='engulf_bull'||body==='engulf_bear');
-  var pin     = (body==='pin_bull'||body==='pin_bear');
-  var indecis = (body==='small');
-  var atEdge  = (pos==='top'||pos==='bottom');
-  var breaking= (pos==='break_up'||pos==='break_down');
-
-  // badge + text using textContent only
   var badge = document.getElementById('sugBadge');
   var text  = document.getElementById('sugText');
   var suggest = null;
-
-  // signal classes
+  var prob = 0;
   var s1='warn', s2='warn', s3='warn';
   var s1t='', s2t='', s3t='';
 
-  if(strong)       { s1='go';   s1t='Strong body — high momentum'; }
-  else if(pin)     { s1='go';   s1t='Pin bar — clean rejection'; }
-  else             { s1='warn'; s1t='Small body — low conviction'; }
+  var isBull    = (body==='big_bull'||body==='engulf_bull');
+  var isBear    = (body==='big_bear'||body==='engulf_bear');
+  var isEngulf  = (body==='engulf_bull'||body==='engulf_bear');
+  var isRejBull = (body==='pin_bull'||body==='doji_bull');
+  var isRejBear = (body==='pin_bear'||body==='doji_bear');
+  var isSmallB  = (body==='small_bull');
+  var isSmallBr = (body==='small_bear');
+  var isDoji    = (body==='doji');
+  var isIndeci  = (isDoji||isSmallB||isSmallBr);
 
-  if(breaking)     { s2='go';   s2t='At box boundary — valid trigger'; }
-  else if(atEdge)  { s2='go';   s2t='At box edge — good position'; }
-  else             { s2='warn'; s2t='Mid-box — wait for edge'; }
+  if(isBull||isBear)            { s1='go';   s1t=isEngulf?'Engulfing — strongest body':'Strong momentum body'; }
+  else if(isRejBull||isRejBear) { s1='go';   s1t='Clean rejection wick'; }
+  else                           { s1='warn'; s1t=isDoji?'Doji — pure indecision':'Small body — low conviction'; }
 
-  // logic matrix
-  if(pos==='break_up' && (body==='big_bull'||body==='engulf_bull')){
-    suggest='breakout'; tradeDir='long';
-    badge.textContent='BREAKOUT LONG'; badge.className='sug-badge green';
-    text.textContent='Strong bullish close above box. Enter on this candle close or next bar open.';
-    s3='go'; s3t='Setup confirmed — enter now';
-  } else if(pos==='break_down' && (body==='big_bear'||body==='engulf_bear')){
-    suggest='breakout'; tradeDir='short';
-    badge.textContent='BREAKOUT SHORT'; badge.className='sug-badge red';
-    text.textContent='Strong bearish close below box. Enter on this candle close.';
-    s3='go'; s3t='Setup confirmed — enter now';
-  } else if(pos==='break_up' && body==='small'){
-    suggest='retest'; tradeDir='long';
-    badge.textContent='WAIT — RETEST'; badge.className='sug-badge gold';
-    text.textContent='Weak close above box. Wait for pullback to box top, then enter long on retest.';
-    s3='warn'; s3t='Setup partial — wait for retest';
-  } else if(pos==='break_down' && body==='small'){
-    suggest='retest'; tradeDir='short';
-    badge.textContent='WAIT — RETEST'; badge.className='sug-badge gold';
-    text.textContent='Weak break below box. Wait for retest of box bottom before shorting.';
-    s3='warn'; s3t='Setup partial — wait for retest';
-  } else if(pos==='break_up' && (body==='big_bear'||body==='engulf_bear')){
-    suggest='reversal'; tradeDir='short';
-    badge.textContent='FALSE BREAK — SHORT'; badge.className='sug-badge red';
-    text.textContent='Bearish candle closing back inside box. Short the false breakout.';
-    s3='go'; s3t='High quality false break setup';
-  } else if(pos==='break_down' && (body==='big_bull'||body==='engulf_bull')){
-    suggest='reversal'; tradeDir='long';
-    badge.textContent='FALSE BREAK — LONG'; badge.className='sug-badge green';
-    text.textContent='Bullish candle closing back inside box. Long the false breakout.';
-    s3='go'; s3t='High quality false break setup';
-  } else if(pos==='top' && (body==='pin_bear'||body==='engulf_bear')){
-    suggest='reversal'; tradeDir='short';
-    badge.textContent='REVERSAL SHORT'; badge.className='sug-badge red';
-    text.textContent='Rejection at box top. Short with SL above the wick. Target box low.';
-    s3='go'; s3t='Clean reversal setup';
-  } else if(pos==='bottom' && (body==='pin_bull'||body==='engulf_bull')){
-    suggest='reversal'; tradeDir='long';
-    badge.textContent='REVERSAL LONG'; badge.className='sug-badge green';
-    text.textContent='Rejection at box bottom. Long with SL below the wick. Target box high.';
-    s3='go'; s3t='Clean reversal setup';
-  } else if(pos==='top' && body==='big_bull'){
-    suggest='breakout'; tradeDir='long';
-    badge.textContent='WATCH BREAKOUT'; badge.className='sug-badge gold';
-    text.textContent='Big bull pushing box top. Wait for a confirmed close above the high.';
-    s3='warn'; s3t='Partial — wait for close above';
-  } else if(pos==='bottom' && body==='big_bear'){
-    suggest='breakout'; tradeDir='short';
-    badge.textContent='WATCH BREAKOUT'; badge.className='sug-badge gold';
-    text.textContent='Big bear pushing box bottom. Wait for confirmed close below the low.';
-    s3='warn'; s3t='Partial — wait for close below';
-  } else if(indecis){
+  if(pos==='reclaim_up'||pos==='reclaim_down'){ s2='go';   s2t='False break — highest quality trigger'; }
+  else if(pos==='break_up'||pos==='break_down'){ s2='go';  s2t='Closed outside zone boundary'; }
+  else if(pos==='top'||pos==='bottom')         { s2='go';  s2t='At zone boundary — valid edge'; }
+  else                                          { s2='warn';s2t='Mid-zone — no structural edge'; }
+
+  if(pos==='mid') {
+    suggest=null; tradeDir='long';
+    badge.textContent='NO TRADE'; badge.className='sug-badge gray';
+    text.textContent='Candle closed mid-zone. No structural edge here regardless of body type — wait for price to reach a zone boundary.';
+    s3='stop'; s3t='No edge mid-zone'; prob=0;
+
+  } else if(isIndeci) {
     suggest=null;
     badge.textContent='NO TRADE'; badge.className='sug-badge gray';
-    text.textContent='Indecision candle. Wait for a decisive candle at a box edge before acting.';
-    s3='stop'; s3t='No valid setup — skip trade';
+    text.textContent='Indecision body at zone boundary. Neither side has conviction. Wait for a candle with a clear directional body before acting.';
+    s3='stop'; s3t='Indecision — skip this candle'; prob=0;
+
+  } else if(pos==='reclaim_down' && (isBull||isRejBull)) {
+    suggest='reversal'; tradeDir='long';
+    badge.textContent='FALSE BREAKDOWN — LONG'; badge.className='sug-badge green';
+    text.textContent='Price swept below support then a bullish body closed back inside the zone. Liquidity grab — smart money hunted stops below support then reversed. This is a LONG. SL below the candle wick.';
+    s3='go'; s3t='A+ — liquidity sweep long'; prob=isEngulf?82:isBull?78:72;
+
+  } else if(pos==='reclaim_up' && (isBear||isRejBear)) {
+    suggest='reversal'; tradeDir='short';
+    badge.textContent='FALSE BREAKOUT — SHORT'; badge.className='sug-badge red';
+    text.textContent='Price swept above resistance then a bearish body closed back inside. Stop hunt above resistance — smart money sold the breakout. This is a SHORT. SL above the candle wick.';
+    s3='go'; s3t='A+ — liquidity sweep short'; prob=isEngulf?82:isBear?78:72;
+
+  } else if(pos==='reclaim_down' && (isBear||isRejBear)) {
+    suggest='breakout'; tradeDir='short';
+    badge.textContent='GENUINE BREAKDOWN — SHORT'; badge.className='sug-badge red';
+    text.textContent='Price broke below support with a bearish close — the breakdown is genuine. Even the brief pullback could not produce a bullish body. Sellers are in control. Short the continuation.';
+    s3='warn'; s3t='B — genuine breakdown continuation'; prob=isBear?58:52;
+
+  } else if(pos==='reclaim_up' && (isBull||isRejBull)) {
+    suggest='breakout'; tradeDir='long';
+    badge.textContent='GENUINE BREAKOUT — LONG'; badge.className='sug-badge green';
+    text.textContent='Price broke above resistance with a bullish close — genuine breakout. The brief pullback held bullish. Buyers in control. Long the continuation.';
+    s3='warn'; s3t='B — genuine breakout continuation'; prob=isBull?58:52;
+
+  } else if(pos==='break_up' && (isBull||isRejBull)) {
+    suggest='breakout'; tradeDir='long';
+    badge.textContent='BREAKOUT LONG'; badge.className='sug-badge green';
+    text.textContent='Strong bullish close above resistance. Buyers cleared the consolidation zone. Enter on this close or next bar open. SL covers full zone width.';
+    s3='go'; s3t='B+ — confirmed breakout long'; prob=isEngulf?68:isBull?63:58;
+
+  } else if(pos==='break_down' && (isBear||isRejBear)) {
+    suggest='breakout'; tradeDir='short';
+    badge.textContent='BREAKOUT SHORT'; badge.className='sug-badge red';
+    text.textContent='Strong bearish close below support. Sellers cleared the consolidation zone. Enter on close or next bar open. SL covers full zone width.';
+    s3='go'; s3t='B+ — confirmed breakout short'; prob=isEngulf?68:isBear?63:58;
+
+  } else if(pos==='break_up' && (isBear||isRejBear)) {
+    suggest='reversal'; tradeDir='short';
+    badge.textContent='FALSE BREAKOUT — SHORT'; badge.className='sug-badge red';
+    text.textContent='Price broke above resistance but the close is bearish — sellers overwhelmed buyers at the close. High probability false breakout. Short the failure.';
+    s3='go'; s3t='A — false break rejection short'; prob=isEngulf?75:isBear?70:65;
+
+  } else if(pos==='break_down' && (isBull||isRejBull)) {
+    suggest='reversal'; tradeDir='long';
+    badge.textContent='FALSE BREAKDOWN — LONG'; badge.className='sug-badge green';
+    text.textContent='Price broke below support but the close is bullish — buyers overwhelmed sellers at the close. High probability false breakdown. Long the failure.';
+    s3='go'; s3t='A — false break rejection long'; prob=isEngulf?75:isBull?70:65;
+
+  } else if(pos==='top' && (isRejBear||isBear)) {
+    suggest='reversal'; tradeDir='short';
+    badge.textContent='RESISTANCE REJECTION — SHORT'; badge.className='sug-badge red';
+    text.textContent='Bearish body or rejection wick at zone resistance. Sellers defended this level — institutional selling pressure. Short with SL just above the wick.';
+    s3='go'; s3t='A — institutional resistance rejection'; prob=isEngulf?72:isBear?67:63;
+
+  } else if(pos==='bottom' && (isRejBull||isBull)) {
+    suggest='reversal'; tradeDir='long';
+    badge.textContent='SUPPORT REJECTION — LONG'; badge.className='sug-badge green';
+    text.textContent='Bullish body or rejection wick at zone support. Buyers defended this level — institutional buying pressure. Long with SL just below the wick.';
+    s3='go'; s3t='A — institutional support rejection'; prob=isEngulf?72:isBull?67:63;
+
+  } else if(pos==='top' && (isBull||isRejBull)) {
+    suggest='breakout'; tradeDir='long';
+    badge.textContent='WATCH — BREAKOUT BUILDING'; badge.className='sug-badge gold';
+    text.textContent='Bullish candle pressing at resistance from inside — not yet closed above. This is preparation, not confirmation. Wait for a close above zone high before entering.';
+    s3='warn'; s3t='Watch — no close above resistance yet'; prob=0;
+
+  } else if(pos==='bottom' && (isBear||isRejBear)) {
+    suggest='breakout'; tradeDir='short';
+    badge.textContent='WATCH — BREAKDOWN BUILDING'; badge.className='sug-badge gold';
+    text.textContent='Bearish candle pressing at support from inside — not yet closed below. Wait for a confirmed close below zone low before entering.';
+    s3='warn'; s3t='Watch — no close below support yet'; prob=0;
+
   } else {
     suggest=null;
-    badge.textContent='WAIT'; badge.className='sug-badge gray';
-    text.textContent='Mixed signal. Need a cleaner candle at a box edge.';
-    s3='warn'; s3t='Unclear — need more confluence';
+    badge.textContent='NO CLEAR SETUP'; badge.className='sug-badge gray';
+    text.textContent='This body and position combination does not form a high-probability setup. No trade.';
+    s3='stop'; s3t='No edge — skip'; prob=0;
   }
 
-  // update signals
+  var pd=document.getElementById('probDisplay');
+  var pn=document.getElementById('probNote');
+  if(prob>=75)      {pd.textContent=prob+'%';pd.style.color='var(--green)'; pn.textContent='A+ setup — highest confidence';}
+  else if(prob>=65) {pd.textContent=prob+'%';pd.style.color='var(--green)'; pn.textContent='A setup — strong edge';}
+  else if(prob>=55) {pd.textContent=prob+'%';pd.style.color='var(--amber)'; pn.textContent='B+ setup — manage risk carefully';}
+  else if(prob>=50) {pd.textContent=prob+'%';pd.style.color='var(--amber)'; pn.textContent='B setup — proceed with caution';}
+  else if(prob>0)   {pd.textContent=prob+'%';pd.style.color='var(--text2)'; pn.textContent='Low probability — consider skipping';}
+  else              {pd.textContent='—';      pd.style.color='var(--text3)'; pn.textContent='No trade probability';}
+
+  var amd=document.getElementById('autoModeDisplay');
+  var amdir=document.getElementById('autoModeDir');
+  if(suggest){
+    amd.textContent=suggest.toUpperCase();
+    amd.style.color=suggest==='breakout'?'var(--gold)':suggest==='retest'?'var(--amber)':'var(--green)';
+    amdir.textContent=(tradeDir==='long'?'▲ LONG':'▼ SHORT')+' · auto-detected';
+    amdir.style.color=tradeDir==='long'?'var(--green)':'var(--red)';
+  } else {
+    amd.textContent='NO TRADE'; amd.style.color='var(--text3)';
+    amdir.textContent='—'; amdir.style.color='var(--text3)';
+  }
+
   document.getElementById('sig1').className='sig-dot '+s1;
   document.getElementById('sig2').className='sig-dot '+s2;
   document.getElementById('sig3').className='sig-dot '+s3;
@@ -760,22 +846,19 @@ function readCandle() {
   document.getElementById('sig2txt').textContent=s2t;
   document.getElementById('sig3txt').textContent=s3t;
 
-  // dir tag
-  var dt = document.getElementById('dirTag');
-  dt.textContent = tradeDir==='long' ? 'LONG' : 'SHORT';
-  dt.className = 'ptag ' + (tradeDir==='long' ? 'bull' : 'bear');
+  var dt=document.getElementById('dirTag');
+  dt.textContent=tradeDir==='long'?'LONG':'SHORT';
+  dt.className='ptag '+(tradeDir==='long'?'bull':'bear');
 
-  // stage labels
-  var posLabels = {top:'AT BOX TOP',bottom:'AT BOX BOTTOM',mid:'MID BOX',break_up:'ABOVE BOX',break_down:'BELOW BOX'};
-  document.getElementById('csLabel').textContent = posLabels[pos] || pos;
-  var modeColors = {breakout:'var(--gold)',retest:'var(--amber)',reversal:'var(--green)'};
-  document.getElementById('csMode').textContent = suggest ? suggest.toUpperCase() : '—';
-  document.getElementById('csMode').style.color = suggest ? modeColors[suggest] : 'var(--text3)';
+  var posLabels={top:'NEAR RESIST',bottom:'NEAR SUPPORT',mid:'MID ZONE',
+    break_up:'ABOVE RESIST',break_down:'BELOW SUPPORT',
+    reclaim_up:'FALSE BREAK UP',reclaim_down:'FALSE BREAK DN'};
+  document.getElementById('csLabel').textContent=posLabels[pos]||pos;
+  var modeColors={breakout:'var(--gold)',retest:'var(--amber)',reversal:'var(--green)'};
+  document.getElementById('csMode').textContent=suggest?suggest.toUpperCase():'NO TRADE';
+  document.getElementById('csMode').style.color=suggest?modeColors[suggest]:'var(--text3)';
 
-  // mode buttons
-  ['mBreak','mRetest','mRev'].forEach(function(id){ document.getElementById(id).className='mbtn'; });
-  var map = {breakout:'mBreak',retest:'mRetest',reversal:'mRev'};
-  if(suggest){ document.getElementById(map[suggest]).className='mbtn suggest'; setMode(suggest, true); }
+  if(suggest) setMode(suggest, true);
 
   drawCandle(body, pos);
   calc();
