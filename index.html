@@ -282,15 +282,37 @@ hr{border:none;border-top:1px solid var(--border);margin:9px 0}
         <div class="candle-ctrls">
           <div>
             <label class="flabel">Candle body</label>
-            <div class="candle-body-grid" id="candleBodyGrid">
-              <!-- Will be populated with clickable candle body options -->
-            </div>
+            <select id="cBody" onchange="readCandle()">
+              <option value="big_bull">Big bullish body</option>
+              <option value="big_bear">Big bearish body</option>
+              <option value="doji">Doji (open ≈ close)</option>
+              <option value="doji_bull">Dragonfly doji (long lower wick)</option>
+              <option value="doji_bear">Gravestone doji (long upper wick)</option>
+              <option value="small_bull">Small bullish body</option>
+              <option value="small_bear">Small bearish body</option>
+              <option value="pin_bull">Pin bar — long lower wick</option>
+              <option value="pin_bear">Pin bar — long upper wick</option>
+              <option value="engulf_bull">Engulfing bullish</option>
+              <option value="engulf_bear">Engulfing bearish</option>
+            </select>
           </div>
           <div>
             <label class="flabel">Where did the candle close?</label>
-            <div class="position-grid" id="positionGrid">
-              <!-- Will be populated with clickable position options -->
-            </div>
+            <select id="cPos" onchange="readCandle()">
+              <optgroup label="— closed inside zone —">
+                <option value="top">Near zone top (inside)</option>
+                <option value="bottom">Near zone bottom (inside)</option>
+                <option value="mid">Mid-zone</option>
+              </optgroup>
+              <optgroup label="— closed outside zone —">
+                <option value="break_up">Closed above resistance</option>
+                <option value="break_down">Closed below support</option>
+              </optgroup>
+              <optgroup label="— false break / reclaim —">
+                <option value="reclaim_up">Broke above then closed back inside</option>
+                <option value="reclaim_down">Broke below then closed back inside</option>
+              </optgroup>
+            </select>
           </div>
 
           <!-- SUGGESTION -->
@@ -698,147 +720,137 @@ function drawCandle(body, pos) {
 //   0%     —  : Indecision, mid-zone, watch-only
 //
 function readCandle() {
-  var body = document.getElementById('cBody').value;
-  var pos  = document.getElementById('cPos').value;
+  // 1. DATA ACQUISITION
+  const body = document.getElementById('cBody').value;
+  const pos  = document.getElementById('cPos').value;
+  const badge = document.getElementById('sugBadge');
+  const text  = document.getElementById('sugText');
 
-  var badge = document.getElementById('sugBadge');
-  var text  = document.getElementById('sugText');
-  var suggest = null;
-  var prob = 0;
-  var s1='warn', s2='warn', s3='warn';
-  var s1t='', s2t='', s3t='';
+  // 2. STATE INITIALIZATION
+  let suggest = null;
+  let tradeDir = 'none';
+  let prob = 0;
+  let s1='warn', s2='warn', s3='warn';
+  let s1t='', s2t='', s3t='';
 
-  var isBull    = (body==='big_bull'||body==='engulf_bull');
-  var isBear    = (body==='big_bear'||body==='engulf_bear');
-  var isEngulf  = (body==='engulf_bull'||body==='engulf_bear');
-  var isRejBull = (body==='pin_bull'||body==='doji_bull');
-  var isRejBear = (body==='pin_bear'||body==='doji_bear');
-  var isSmallB  = (body==='small_bull');
-  var isSmallBr = (body==='small_bear');
-  var isDoji    = (body==='doji');
-  var isIndeci  = (isDoji||isSmallB||isSmallBr);
+  // 3. PREDICATE LOGIC (Logic Alignment)
+  const isBull   = (body==='big_bull'||body==='engulf_bull');
+  const isBear   = (body==='big_bear'||body==='engulf_bear');
+  const isEngulf = (body==='engulf_bull'||body==='engulf_bear');
+  const isRejBull = (body==='pin_bull'||body==='doji_bull');
+  const isRejBear = (body==='pin_bear'||body==='doji_bear');
+  const isDoji   = (body==='doji');
+  const isIndeci = (isDoji || body==='small_bull' || body==='small_bear');
 
-  if(isBull||isBear)            { s1='go';   s1t=isEngulf?'Engulfing — strongest body':'Strong momentum body'; }
-  else if(isRejBull||isRejBear) { s1='go';   s1t='Clean rejection wick'; }
-  else                           { s1='warn'; s1t=isDoji?'Doji — pure indecision':'Small body — low conviction'; }
+  // 4. SIGNAL COMPONENT EVALUATION
+  // S1: Body Strength
+  if(isBull||isBear) { 
+    s1='go'; s1t=isEngulf?'Engulfing — Max Momentum':'Strong Trend Body'; 
+  } else if(isRejBull||isRejBear) { 
+    s1='go'; s1t='Clean Rejection Wick'; 
+  } else { 
+    s1='warn'; s1t=isDoji?'Doji — Pure Indecision':'Small Body — Low Conviction'; 
+  }
 
-  if(pos==='reclaim_up'||pos==='reclaim_down'){ s2='go';   s2t='False break — highest quality trigger'; }
-  else if(pos==='break_up'||pos==='break_down'){ s2='go';  s2t='Closed outside zone boundary'; }
-  else if(pos==='top'||pos==='bottom')         { s2='go';  s2t='At zone boundary — valid edge'; }
-  else                                          { s2='warn';s2t='Mid-zone — no structural edge'; }
+  // S2: Structural Position
+  const posMap = {
+    reclaim_up: 'Liquidity Trap High', reclaim_down: 'Liquidity Trap Low',
+    break_up: 'Outside Resistance', break_down: 'Outside Support',
+    top: 'At Resistance', bottom: 'At Support', mid: 'No Structural Edge'
+  };
+  s2 = (pos==='mid') ? 'warn' : 'go';
+  s2t = posMap[pos] || 'Unknown Position';
 
+  // 5. THE DECISION MATRIX (Corrected Market Conditions)
+  
+  // --- EXIT CONDITIONS ---
   if(pos==='mid') {
-    suggest=null; tradeDir='long';
+    suggest=null; tradeDir='none';
     badge.textContent='NO TRADE'; badge.className='sug-badge gray';
-    text.textContent='Candle closed mid-zone. No structural edge here regardless of body type — wait for price to reach a zone boundary.';
-    s3='stop'; s3t='No edge mid-zone'; prob=0;
-
-  } else if(isIndeci) {
-    suggest=null;
+    text.textContent='Candle closed mid-zone. High risk of chop. Wait for boundary contact.';
+    s3='stop'; s3t='No Edge Mid-Zone'; prob=0;
+  } 
+  else if(isIndeci && !pos.includes('reclaim')) {
+    suggest=null; tradeDir='none';
     badge.textContent='NO TRADE'; badge.className='sug-badge gray';
-    text.textContent='Indecision body at zone boundary. Neither side has conviction. Wait for a candle with a clear directional body before acting.';
-    s3='stop'; s3t='Indecision — skip this candle'; prob=0;
+    text.textContent='Indecision body at boundary. Neither side has control. Wait for directional close.';
+    s3='stop'; s3t='Indecision Skip'; prob=0;
+  }
 
-  } else if(pos==='reclaim_down' && (isBull||isRejBull)) {
+  // --- A+ REVERSALS (False Breaks/Reclaims) ---
+  else if(pos==='reclaim_down' && (isBull||isRejBull)) {
     suggest='reversal'; tradeDir='long';
     badge.textContent='FALSE BREAKDOWN — LONG'; badge.className='sug-badge green';
-    text.textContent='Price swept below support then a bullish body closed back inside the zone. Liquidity grab — smart money hunted stops below support then reversed. This is a LONG. SL below the candle wick.';
-    s3='go'; s3t='A+ — liquidity sweep long'; prob=isEngulf?82:isBull?78:72;
-
-  } else if(pos==='reclaim_up' && (isBear||isRejBear)) {
+    text.textContent='Price swept below support then reclaimed the zone. Bear Trap confirmed. High probability LONG.';
+    s3='go'; s3t='A+ Liquidity Sweep'; prob=isEngulf?85:isBull?80:75;
+  } 
+  else if(pos==='reclaim_up' && (isBear||isRejBear)) {
     suggest='reversal'; tradeDir='short';
     badge.textContent='FALSE BREAKOUT — SHORT'; badge.className='sug-badge red';
-    text.textContent='Price swept above resistance then a bearish body closed back inside. Stop hunt above resistance — smart money sold the breakout. This is a SHORT. SL above the candle wick.';
-    s3='go'; s3t='A+ — liquidity sweep short'; prob=isEngulf?82:isBear?78:72;
+    text.textContent='Price swept above resistance then reclaimed the zone. Bull Trap confirmed. High probability SHORT.';
+    s3='go'; s3t='A+ Liquidity Sweep'; prob=isEngulf?85:isBear?80:75;
+  }
 
-  } else if(pos==='reclaim_down' && (isBear||isRejBear)) {
-    suggest='breakout'; tradeDir='short';
-    badge.textContent='GENUINE BREAKDOWN — SHORT'; badge.className='sug-badge red';
-    text.textContent='Price broke below support with a bearish close — the breakdown is genuine. Even the brief pullback could not produce a bullish body. Sellers are in control. Short the continuation.';
-    s3='warn'; s3t='B — genuine breakdown continuation'; prob=isBear?58:52;
+  // --- A REJECTIONS (Zone Defense) ---
+  else if(pos==='top' && (isBear||isRejBear)) {
+    suggest='reversal'; tradeDir='short';
+    badge.textContent='RESISTANCE REJECTION'; badge.className='sug-badge red';
+    text.textContent='Institutional selling pressure at resistance. Sellers defending the zone. SHORT with SL above wick.';
+    s3='go'; s3t='A Rejection'; prob=isEngulf?75:isBear?70:65;
+  }
+  else if(pos==='bottom' && (isBull||isRejBull)) {
+    suggest='reversal'; tradeDir='long';
+    badge.textContent='SUPPORT REJECTION'; badge.className='sug-badge green';
+    text.textContent='Institutional buying pressure at support. Buyers defending the zone. LONG with SL below wick.';
+    s3='go'; s3t='A Rejection'; prob=isEngulf?75:isBull?70:65;
+  }
 
-  } else if(pos==='reclaim_up' && (isBull||isRejBull)) {
-    suggest='breakout'; tradeDir='long';
-    badge.textContent='GENUINE BREAKOUT — LONG'; badge.className='sug-badge green';
-    text.textContent='Price broke above resistance with a bullish close — genuine breakout. The brief pullback held bullish. Buyers in control. Long the continuation.';
-    s3='warn'; s3t='B — genuine breakout continuation'; prob=isBull?58:52;
-
-  } else if(pos==='break_up' && (isBull||isRejBull)) {
+  // --- B+ BREAKOUTS (Momentum Continuation) ---
+  else if(pos==='break_up' && (isBull)) {
     suggest='breakout'; tradeDir='long';
     badge.textContent='BREAKOUT LONG'; badge.className='sug-badge green';
-    text.textContent='Strong bullish close above resistance. Buyers cleared the consolidation zone. Enter on this close or next bar open. SL covers full zone width.';
-    s3='go'; s3t='B+ — confirmed breakout long'; prob=isEngulf?68:isBull?63:58;
-
-  } else if(pos==='break_down' && (isBear||isRejBear)) {
+    text.textContent='Confirmed close above resistance. Demand has overwhelmed supply. Long the momentum.';
+    s3='go'; s3t='B+ Breakout'; prob=isEngulf?70:65;
+  }
+  else if(pos==='break_down' && (isBear)) {
     suggest='breakout'; tradeDir='short';
-    badge.textContent='BREAKOUT SHORT'; badge.className='sug-badge red';
-    text.textContent='Strong bearish close below support. Sellers cleared the consolidation zone. Enter on close or next bar open. SL covers full zone width.';
-    s3='go'; s3t='B+ — confirmed breakout short'; prob=isEngulf?68:isBear?63:58;
+    badge.textContent='BREAKDOWN SHORT'; badge.className='sug-badge red';
+    text.textContent='Confirmed close below support. Supply has overwhelmed demand. Short the momentum.';
+    s3='go'; s3t='B+ Breakdown'; prob=isEngulf?70:65;
+  }
 
-  } else if(pos==='break_up' && (isBear||isRejBear)) {
+  // --- FAILURE PLAYS (Broken Breakouts) ---
+  else if(pos==='break_up' && (isBear||isRejBear)) {
     suggest='reversal'; tradeDir='short';
-    badge.textContent='FALSE BREAKOUT — SHORT'; badge.className='sug-badge red';
-    text.textContent='Price broke above resistance but the close is bearish — sellers overwhelmed buyers at the close. High probability false breakout. Short the failure.';
-    s3='go'; s3t='A — false break rejection short'; prob=isEngulf?75:isBear?70:65;
-
-  } else if(pos==='break_down' && (isBull||isRejBull)) {
+    badge.textContent='FAILED BREAKOUT — SHORT'; badge.className='sug-badge red';
+    text.textContent='Price broke resistance but failed to hold. Sellers took control back immediately. High probability reversal.';
+    s3='go'; s3t='A Failed Break'; prob=75;
+  }
+  else if(pos==='break_down' && (isBull||isRejBull)) {
     suggest='reversal'; tradeDir='long';
-    badge.textContent='FALSE BREAKDOWN — LONG'; badge.className='sug-badge green';
-    text.textContent='Price broke below support but the close is bullish — buyers overwhelmed sellers at the close. High probability false breakdown. Long the failure.';
-    s3='go'; s3t='A — false break rejection long'; prob=isEngulf?75:isBull?70:65;
+    badge.textContent='FAILED BREAKDOWN — LONG'; badge.className='sug-badge green';
+    text.textContent='Price broke support but failed to hold. Buyers took control back immediately. High probability reversal.';
+    s3='go'; s3t='A Failed Break'; prob=75;
+  }
 
-  } else if(pos==='top' && (isRejBear||isBear)) {
-    suggest='reversal'; tradeDir='short';
-    badge.textContent='RESISTANCE REJECTION — SHORT'; badge.className='sug-badge red';
-    text.textContent='Bearish body or rejection wick at zone resistance. Sellers defended this level — institutional selling pressure. Short with SL just above the wick.';
-    s3='go'; s3t='A — institutional resistance rejection'; prob=isEngulf?72:isBear?67:63;
-
-  } else if(pos==='bottom' && (isRejBull||isBull)) {
-    suggest='reversal'; tradeDir='long';
-    badge.textContent='SUPPORT REJECTION — LONG'; badge.className='sug-badge green';
-    text.textContent='Bullish body or rejection wick at zone support. Buyers defended this level — institutional buying pressure. Long with SL just below the wick.';
-    s3='go'; s3t='A — institutional support rejection'; prob=isEngulf?72:isBull?67:63;
-
-  } else if(pos==='top' && (isBull||isRejBull)) {
-    suggest='breakout'; tradeDir='long';
-    badge.textContent='WATCH — BREAKOUT BUILDING'; badge.className='sug-badge gold';
-    text.textContent='Bullish candle pressing at resistance from inside — not yet closed above. This is preparation, not confirmation. Wait for a close above zone high before entering.';
-    s3='warn'; s3t='Watch — no close above resistance yet'; prob=0;
-
-  } else if(pos==='bottom' && (isBear||isRejBear)) {
-    suggest='breakout'; tradeDir='short';
-    badge.textContent='WATCH — BREAKDOWN BUILDING'; badge.className='sug-badge gold';
-    text.textContent='Bearish candle pressing at support from inside — not yet closed below. Wait for a confirmed close below zone low before entering.';
-    s3='warn'; s3t='Watch — no close below support yet'; prob=0;
-
-  } else {
-    suggest=null;
+  // --- CATCH-ALL ---
+  else {
+    suggest=null; tradeDir='none';
     badge.textContent='NO CLEAR SETUP'; badge.className='sug-badge gray';
-    text.textContent='This body and position combination does not form a high-probability setup. No trade.';
-    s3='stop'; s3t='No edge — skip'; prob=0;
+    text.textContent='Low confluence between body type and position. Skip this candle.';
+    s3='stop'; s3t='No Confluence'; prob=0;
   }
 
-  var pd=document.getElementById('probDisplay');
-  var pn=document.getElementById('probNote');
-  if(prob>=75)      {pd.textContent=prob+'%';pd.style.color='var(--green)'; pn.textContent='A+ setup — highest confidence';}
-  else if(prob>=65) {pd.textContent=prob+'%';pd.style.color='var(--green)'; pn.textContent='A setup — strong edge';}
-  else if(prob>=55) {pd.textContent=prob+'%';pd.style.color='var(--amber)'; pn.textContent='B+ setup — manage risk carefully';}
-  else if(prob>=50) {pd.textContent=prob+'%';pd.style.color='var(--amber)'; pn.textContent='B setup — proceed with caution';}
-  else if(prob>0)   {pd.textContent=prob+'%';pd.style.color='var(--text2)'; pn.textContent='Low probability — consider skipping';}
-  else              {pd.textContent='—';      pd.style.color='var(--text3)'; pn.textContent='No trade probability';}
+  // 6. UI RENDER ENGINE
+  // Probability Display
+  const pd=document.getElementById('probDisplay');
+  const pn=document.getElementById('probNote');
+  if(prob>=80)      {pd.textContent=prob+'%'; pd.style.color='var(--green)'; pn.textContent='A+ Setup — Max Confidence';}
+  else if(prob>=70) {pd.textContent=prob+'%'; pd.style.color='var(--green)'; pn.textContent='A Setup — High Edge';}
+  else if(prob>=60) {pd.textContent=prob+'%'; pd.style.color='var(--amber)'; pn.textContent='B+ Setup — Normal Risk';}
+  else              {pd.textContent='—';      pd.style.color='var(--text3)'; pn.textContent='No Trade Detected';}
 
-  var amd=document.getElementById('autoModeDisplay');
-  var amdir=document.getElementById('autoModeDir');
-  if(suggest){
-    amd.textContent=suggest.toUpperCase();
-    amd.style.color=suggest==='breakout'?'var(--gold)':suggest==='retest'?'var(--amber)':'var(--green)';
-    amdir.textContent=(tradeDir==='long'?'▲ LONG':'▼ SHORT')+' · auto-detected';
-    amdir.style.color=tradeDir==='long'?'var(--green)':'var(--red)';
-  } else {
-    amd.textContent='NO TRADE'; amd.style.color='var(--text3)';
-    amdir.textContent='—'; amdir.style.color='var(--text3)';
-  }
-
+  // Signal Dots
   document.getElementById('sig1').className='sig-dot '+s1;
   document.getElementById('sig2').className='sig-dot '+s2;
   document.getElementById('sig3').className='sig-dot '+s3;
@@ -846,19 +858,24 @@ function readCandle() {
   document.getElementById('sig2txt').textContent=s2t;
   document.getElementById('sig3txt').textContent=s3t;
 
-  var dt=document.getElementById('dirTag');
-  dt.textContent=tradeDir==='long'?'LONG':'SHORT';
-  dt.className='ptag '+(tradeDir==='long'?'bull':'bear');
+  // Auto Mode & Tags
+  const amd=document.getElementById('autoModeDisplay');
+  const amdir=document.getElementById('autoModeDir');
+  const dt=document.getElementById('dirTag');
 
-  var posLabels={top:'NEAR RESIST',bottom:'NEAR SUPPORT',mid:'MID ZONE',
-    break_up:'ABOVE RESIST',break_down:'BELOW SUPPORT',
-    reclaim_up:'FALSE BREAK UP',reclaim_down:'FALSE BREAK DN'};
-  document.getElementById('csLabel').textContent=posLabels[pos]||pos;
-  var modeColors={breakout:'var(--gold)',retest:'var(--amber)',reversal:'var(--green)'};
-  document.getElementById('csMode').textContent=suggest?suggest.toUpperCase():'NO TRADE';
-  document.getElementById('csMode').style.color=suggest?modeColors[suggest]:'var(--text3)';
-
-  if(suggest) setMode(suggest, true);
+  if(suggest){
+    amd.textContent=suggest.toUpperCase();
+    amd.style.color=suggest==='breakout'?'var(--gold)':'var(--green)';
+    amdir.textContent=(tradeDir==='long'?'▲ LONG':'▼ SHORT')+' · Auto-detected';
+    amdir.style.color=tradeDir==='long'?'var(--green)':'var(--red)';
+    dt.textContent=tradeDir.toUpperCase();
+    dt.className='ptag '+(tradeDir==='long'?'bull':'bear');
+    setMode(suggest, true);
+  } else {
+    amd.textContent='NO TRADE'; amd.style.color='var(--text3)';
+    amdir.textContent='—'; amdir.style.color='var(--text3)';
+    dt.textContent='NONE'; dt.className='ptag gray';
+  }
 
   drawCandle(body, pos);
   calc();
